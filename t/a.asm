@@ -1,11 +1,25 @@
 section .data align=16
 	s0 db "Hello World!",10,0
 	s1 db "%llx",10,0
+	s2 times 35 db 0x41, 0x42, 0x43
+	db "q", 0
+
+	ss0 db "0",10,0
+	ss1 db "1",10,0
 
 	ql.io.data dq 0
-	ql.io.is.offset equ 0x10
+	ql.io.is.offset equ 0x18
 	ql.io.os.offsetStr equ 0x08
-	ql.io.is.offsetStr equ 0x08
+	ql.io.is.offsetStr equ 0x10
+
+;	           			     $       7       6       5       4       3       2       1       0
+	ql.io.is$			equ 0b0000000000000000000000000000000000000000000000000000000000000000
+	ql.io.isNum			equ 0b0000001111111111000000000000000000000000000000000000000000000000
+	ql.io.isWhiteSpace	equ 0b0000000000000000000000000000000100000000000000000011111000000000
+;	           			     $       F       E       D       C       B       A       9       8
+	ql.io.isLetter		equ 0b0000011111111111111111111111111000000111111111111111111111111110
+	ql.io.isLetterS		equ 0b0000011111111111111111111111111000000000000000000000000000000000
+	ql.io.isLetterB		equ 0b0000000000000000000000000000000000000111111111111111111111111110
 
 section .bss align=16
 
@@ -14,28 +28,11 @@ section .text
 	extern scanf, printf, fgets, fputs, stdin, stdout
 	extern sscanf, sprintf
 
-ql.proc.begin_:
-	; rdi : nOWords (128 bits / 16 bytes)
-
-	push rbp
-	push r12
-	push r13
-	push r14
-	push r15
-	pushfq
-	shl rdi, 1
-	mov rbp, rsp
-	neg rdi
-	lea rsp, [rsp+8*rdi-8]
-	neg rdi
-	push rdi
-
-	push qword [rsp+8*rdi+64]
-	mov [rsp+8*rdi+72], rbx
-
-	ret
-
 ql.proc.begin:
+	; usuage
+	; push <nOWords> ; nOWords : number of owords (128 bits / 16 bytes) to reserve
+	; call ql.proc.begin
+
 	push r12
 	mov r12, [rsp+0x10]
 	push r13
@@ -139,12 +136,12 @@ ql.io:
 	mov r12, rdi
 	mov r13, rsi
 
-	xor rdi, rdi
-	lea rsi, [r12+r13+ql.io.is.offset+ql.io.is.offsetStr+ql.io.os.offsetStr+0x20]
+	xor edi, edi
+	lea rsi, [r12+r13+ql.io.is.offset+ql.io.is.offsetStr+ql.io.os.offsetStr+0x40]
 	mov rdx, 3 ; PROT_READ | PROT_WRITE
 	mov r10, 0x22 ; MAP_PRIVATE | MAP_ANONYMOUS
 	mov r8, -1
-	xor r9, r9
+	xor r9d, r9d
 	mov rax, 0x09
 	syscall
 
@@ -156,13 +153,18 @@ ql.io:
 	mov [rax], rsi
 
 	lea rsi, [rax+r12+ql.io.is.offset+ql.io.is.offsetStr]
+	mov [rax+0x10], rsi
+	add rsi, 0x20
 	mov [rax+0x08], rsi
 
-	xor rsi, rsi
+	lea rsi, [rax+ql.io.is.offset+ql.io.is.offsetStr]
 	mov [rax+ql.io.is.offset], rsi
+	mov [rax+ql.io.is.offset+0x08], rsi
+
+	xor esi, esi
 	mov [rax+r12+ql.io.is.offset+ql.io.is.offsetStr+ql.io.os.offsetStr], rsi
 
-	xor rax, rax
+	xor eax, eax
 	call ql.proc.end
 	ret
 
@@ -183,19 +185,39 @@ ql.$io: ;ql.~io
 	ret
 
 ql.io.is.load:
+	mov r10, [ql.io.data]
+	xor eax, eax
+	mov rsi, [r10+ql.io.is.offset]
+	mov rdx, [r10+0x10]
+	xor edi, edi
+	sub rdx, rsi
+	jle .e0
+	syscall
+
+	mov r10, [ql.io.data]
+	add [r10+ql.io.is.offset], rax
+
+	ret
+
+	.e0:
+	xor rax, rax
+	not rax
+	ret
+
+ql.io.is.load_:
 	push qword 0
 	call ql.proc.begin
 
 	mov r12, [ql.io.data]
 
 	mov rcx, [r12+ql.io.is.offset]
-	mov rdx, [r12+0x08]
+	mov rdx, [r12+0x10]
 	neg rcx
 	sub rdx, r12
 
 	lea rsi, [r12+ql.io.is.offset+ql.io.is.offsetStr]
-	xor rax, rax
-	xor rdi, rdi
+	xor eax, eax
+	xor edi, edi
 	lea rdx, [rdx+rbx-ql.io.is.offset-ql.io.is.offsetStr]
 	add rsi, [r12+ql.io.is.offset]
 	test rdx, rdx
@@ -207,84 +229,251 @@ ql.io.is.load:
 	call ql.proc.end
 	ret
 
-.ql.io.is.load.e0:
+	.ql.io.is.load.e0:
 	mov rax, 1
 	ret
 
 ql.io.is.unload:
+	mov r10, [ql.io.data]
+	lea rsi, [r10+ql.io.is.offset+ql.io.is.offsetStr]
+	mov [r10+ql.io.is.offset], rsi
+	mov [r10+ql.io.is.offset+0x08], rsi
+
+	ret
+
+ql.io.is.read_iu8:
+	; rdi : bool skipFollowingwhiteSpaces
+
+	mov r10, [ql.io.data]
+	mov r11, [r10+ql.io.is.offset]
+	mov rsi, [r10+ql.io.is.offset+0x08]
+	mov r9, ql.io.isNum
+
+	xor eax, eax
+	mov r10, 10
+
+	movzx r8, byte [rsi]
+	xor ecx, ecx
+	xor r8, 0x2d ; - sign
+	jnz .l0s
+
+	not rcx
+	inc rsi
+
+	.l0s:
+		movzx r8, byte [rsi]
+
+		cmp rsi, r11
+		jge .l0e
+
+		bt r9, r8
+		jnc .l0e
+
+
+		mul r10
+		sub r8, 0x30
+		inc rsi
+		add rax, r8
+		jmp .l0s
+	.l0e:
+
+	jecxz .c0e
+		neg rax
+	.c0e:
+
+	mov rcx, rdi
+	mov r9, ql.io.isWhiteSpace
+	jecxz .c1e
+		.l1s:
+			movzx edx, byte [rsi]
+			bt r9, rdx
+			jnc .l1e
+
+			inc rsi
+			jmp .l1s
+		.l1e:
+	.c1e:
+
 	mov rdi, [ql.io.data]
-	mov qword [rdi+ql.io.is.offset], 0
+	mov [rdi+ql.io.is.offset+0x08], rsi
 
 	ret
 
 ql.io.os.flush:
+	mov r10, [ql.io.data]
+	mov r11, [r10+0x08]
+
+	mov rax, 0x01
+	mov rdi, 1
+	lea rsi, [r11+ql.io.os.offsetStr]
+	mov rdx, [r11]
+	syscall
+
+	mov r10, [ql.io.data]
+	mov r11, [r10+0x08]
+	mov qword [r11], 0
+
+	ret
+
 ql.io.os.write_cstr:
-ql.io.os.write_cstr_p: ; 64 packed
+	;rdi : src
+
+	mov r10, [ql.io.data]
+	mov rsi, rdi
+	mov r10, [r10+0x08]
+	mov rdi, [r10]
+	mov r8, rsi
+	lea rdi, [r10+rdi+ql.io.os.offsetStr]
+
+	.l0s:
+		lodsb
+		stosb
+
+		test al, 0xff
+		jnz .l0s
+	
+	sub rsi, r8
+	add [r10], rsi
+
+	ret
+
+ql.io.os.write_cstr_:
 	; rdi : src
 
-	mov rsi, [ql.io.data]
-	xor rcx, rcx
+	mov r10, [ql.io.data]
+	xor ecx, ecx
 	vpxor ymm0, ymm0, ymm0
-	mov r8, [rsi+0x08]
+	mov r8, [r10+0x08]
 	mov r9, [r8]
 	lea r9, [r8+r9+ql.io.os.offsetStr]
 
-.ql.io.os.write_cstr_p.l0s:
+	.l0s:
 		vmovdqu ymm3, [rdi+rcx]
+
 		vpcmpeqb ymm1, ymm3, ymm0
-
-		vextractf128 xmm2, ymm1, 1
-		vpor xmm1, xmm1, xmm2
-
-		pextrq rax, xmm1, 0
-		pextrq rdx, xmm1, 1
-
-		or rax, rdx
-		jnz .ql.io.os.write_cstr_p.l0e
+		vptest ymm0, ymm1
+		jnc .l0e
 
 		vmovdqu [r9+rcx], ymm3
 
 		add rcx, 32
-		jmp .ql.io.os.write_cstr_p.l0s
-.ql.io.os.write_cstr_p.l0e:
+		jmp .l0s
+	.l0e:
+	
+	lea rsi, [rdi+rcx]
+	lea rdi, [r9+rcx]
+
+	.l1s:
+		lodsb
+		stosb
+
+		test al, 0xff
+		jnz .l1s
+
+	mov r10, [r10+0x08]
+	lea rsi, [r10+ql.io.os.offsetStr]
+	sub rdi, rsi
+	mov [r10], rdi
+
+	ret
+
+ql.io.os.write_cstr_p: ; 64 packed
+	;rdi : src
+
+	mov r10, [ql.io.data]
+	xor ecx, ecx
+	vpxor ymm0, ymm0, ymm0
+	mov r8, [r10+0x08]
+	mov r9, [r8]
+	lea r9, [r8+r9+ql.io.os.offsetStr]
+
+	.l0s:
+		vmovdqu ymm3, [rdi+rcx]
+		vmovdqu [r9+rcx], ymm3
+
+		vpcmpeqb ymm1, ymm3, ymm0
+		vptest ymm0, ymm1
+		jnc .l0e
+
+		add rcx, 32
+		jmp .l0s
+	.l0e:
+
+	lea rsi, [rdi+rcx-32]
+
+	.l1s:
+		lodsb
+
+		test al, 0xff
+		jnz .l1s
+
+	mov r10, [r10+0x08]
+	sub rsi, rdi
+	add [r10], rsi
 
 	ret
 
 ql.io.os.write_i8:
 ql.io.os.write_u8:
+	; rdi : u8 n
+
+	push rbp
+	mov rbp, rsp
+	sub rsp, 0x40
+
+	mov rax, rdi
+	mov r10, 10
+	mov byte [rbp-0x1f], 0
+	lea rdi, [rbp-0x20]
+	lea rsi, [rbp-0x20]
+
+	.l0s:
+		xor edx, edx
+		div r10
+		add edx, 0x30
+		mov [rdi], dl
+		dec rdi
+		test rax, rax
+		jnz .l0s
+	.l0e:
+
+	sub rsi, rdi
+
+	mov r10, [ql.io.data]
+	vmovdqu ymm0, [rdi+1]
+	mov r11, [r10+0x08]
+	mov r8, [r11]
+	vmovdqu [r11+r8+ql.io.os.offsetStr], ymm0
+	add [r11], rsi
+
+	add rsp, 0x40
+	pop rbp
 	ret
 
 main:
 	push qword 2
 	call ql.proc.begin
 
-	mov rdi, 32
-	mov rsi, 128
+	mov rdi, 20000000
+	mov rsi, 20000000
 	call ql.io
 	call ql.io.is.load
 
-	call ql.context.save
-		mov rax, 1
-		mov rdi, 1
-		mov r12, [ql.io.data]
-		lea rsi, [r12+ql.io.is.offset+ql.io.is.offsetStr]
-		mov rdx, [r12+ql.io.is.offset]
-		sub rdx, 1
-		syscall
-	call ql.context.load
+	mov edi, 1
+	call ql.io.is.read_iu8
+	mov ebx, eax
 
-	mov rdi, 1
-	mov rsi, s0
-	mov rdx, 13
-	mov rax, 1
-	syscall
+	mov edi, 1
+	call ql.io.is.read_iu8
 
-	mov rdi, s0
-	call printf
+	lea rdi, [eax+ebx]
+	call ql.io.os.write_u8
+
+	call ql.io.os.flush
 
 	call ql.$io
 
-	xor rax,rax
+	xor eax,eax
 
 	call ql.proc.end
 	ret

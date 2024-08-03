@@ -3,11 +3,15 @@ run
 end
 
 define custom_f
+p $ymm0.v32_int8
+p $ymm1.v32_int8
+p $ymm2.v32_int8
+p $ymm3.v32_int8
 end
 
 define a
 ni
-x/20gx $rsp
+#x/20gx $rsp
 custom_f
 ref
 end
