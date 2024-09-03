@@ -431,7 +431,40 @@ main:
 	mov rdi, 12000000
 	mov rsi, 12000000
 	call ql.io
-;	call ql.io.is.load
+	call ql.io.is.load
+
+	mov edi, 1
+	call ql.io.is.read_iu8
+	mov [rbp-0x08], rax
+
+	mov edi, 1
+	call ql.io.is.read_iu8
+	mov [rbp-0x10], rax
+
+	call ql.io.is.read_iu8
+	mov ecx, eax
+
+
+	mov r10, 10
+	mov ebx, [rbp-0x10]
+	mov eax, [rbp-0x08]
+
+	div ebx ; a/b
+
+	.l0s:
+		jecxz .l0e
+
+		dec ecx
+		imul eax, edx, 10 ; a = r*10
+		xor edx, edx
+		div ebx
+
+		jmp .l0s
+	.l0e:
+
+	mov edi, eax
+	call ql.io.os.write_u8
+
 
 	call ql.io.os.flush
 
