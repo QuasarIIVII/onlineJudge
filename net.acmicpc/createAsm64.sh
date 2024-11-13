@@ -1,5 +1,5 @@
-# $1 : folder name
 #!/bin/bash
+# $1 : folder name
 
 if [ -z $1 ]; then
 	echo "Usage: $0 <foldername>"
