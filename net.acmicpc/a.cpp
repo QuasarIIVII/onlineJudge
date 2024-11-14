@@ -16,6 +16,7 @@
 #include<functional>
 #include<algorithm>
 #include<cmath>
+#include<cstring>
 
 using namespace std;
 
@@ -24,6 +25,15 @@ using i1=int8_t;	using i2=int16_t;	using i4=int32_t;	using i8=int64_t;	using i16
 										using f4=float;		using f8=double;	using f16=long double;
 using uf1=uint_fast8_t;	using uf2=uint_fast16_t;using uf4=uint_fast32_t;using uf8=uint_fast64_t;
 using if1=int_fast8_t;	using if2=int_fast16_t;	using if4=int_fast32_t;	using if8=int_fast64_t;
+
+#ifdef ONLINE_JUDGE
+bool debug=false;
+#else
+bool debug=true;
+#endif
+
+#define DEBUG if(debug)
+#define DEBUG_BLOCK(x) if(debug){x}
 
 int main(){
 	ios::sync_with_stdio(false);
