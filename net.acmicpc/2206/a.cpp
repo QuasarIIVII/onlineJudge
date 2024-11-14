@@ -35,7 +35,7 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
-array<bitset<1000>,1000> a;
+array<char[1000],1000> a;
 array<array<array<uf4,2>,1000>,1000> d;
 struct S0{if2 x,y;};
 struct S1:public S0{
@@ -45,16 +45,24 @@ struct S1:public S0{
 };
 constexpr array<S0, 4> dd={S0{1,0},S0{-1,0},S0{0,1},S0{0,-1}};
 
+#define ex 0
+#define sy 0
+#define sx (n-1)
+#define ey (m-1)
+
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
 
-	for(auto& a:d)a.fill(array<uf4,2>{UINT_FAST32_MAX,UINT_FAST32_MAX});
-
 	uf2 n,m;
 	cin>>n>>m;
 
-	for(uf2 i=n;i--;)cin>>a[i];
+	d[ex][ey]=array<uf4,2>{UINT_FAST32_MAX,UINT_FAST32_MAX};
+
+	for(uf2 i=n;i--;){
+		cin>>a[i];
+		for(uf2 j=125;j--;)*reinterpret_cast<u8*>(a[i]+(j<<3))&=0x01010101'01010101ull;
+	}
 
 	DEBUG_BLOCK(
 		for(uf2 i=0;i<n;++i,cout<<"\033[49m\n")for(uf2 j=0;j<m;++j)
@@ -63,40 +71,41 @@ int main(){
 	)
 
 	queue<S1> q;
-	q.push(S1{n-1,m-1,0});
+	q.emplace(sx,sy,0);
 	d[q.front().x][q.front().y]={1,1};
 
-	for(;q.size();q.pop()){
-		for(auto& dd:dd){
-			const S1 &qh=q.front();
-			const S0 p{qh.x+dd.x, qh.y+dd.y};
-			if(p.x<0 || n<=p.x || p.y<0 || m<=p.y)continue;
+	for(;q.size();q.pop())for(auto& dd:dd){
+		const S1 &qh=q.front();
+		const S0 p{qh.x+dd.x, qh.y+dd.y};
+		if(p.x<0 || n<=p.x || p.y<0 || m<=p.y)continue;
 
-			const uf4 src=d[qh.x][qh.y][qh.z]+1;
-			array<uf4,2> &dst=d[p.x][p.y];
+		const uf4 src=d[qh.x][qh.y][qh.z]+1;
+		array<uf4,2> &dst=d[p.x][p.y];
 
-			switch(qh.z<<1 | a[p.x][p.y]){
-			case 0:
-				if(src>=dst[0])continue;
-				dst[0]=src;
-				if(dst[1]>src)dst[1]=src;
-				q.push(S1{p.x,p.y,0});
-				break;
-			case 1:
-				if(src>=dst[1])continue;
-				dst[1]=src;
-				q.push(S1{p.x,p.y,1});
-				break;
-			case 2:
-				if(src>=dst[1])continue;
-				dst[1]=src;
-				q.push(S1{p.x,p.y,1});
-			}
+		if(!dst[0])dst[0]=~dst[0];
+		if(!dst[1])dst[1]=~dst[1];
+
+		switch(qh.z<<1 | a[p.x][p.y]){
+		case 0:
+			if(src>=dst[0])continue;
+			dst[0]=src;
+			if(dst[1]>src)dst[1]=src;
+			q.emplace(p.x,p.y,0);
+			break;
+		case 1:
+			if(src>=dst[1])continue;
+			dst[1]=src;
+			q.emplace(p.x,p.y,1);
+			break;
+		case 2:
+			if(src>=dst[1])continue;
+			dst[1]=src;
+			q.emplace(p.x,p.y,1);
 		}
 	}
 
-	DEBUG cout<<d[0][0][0]<<' '<<d[0][0][1]<<'\n';
-	cout<<static_cast<if4>(d[0][0][0]<d[0][0][1]?d[0][0][0]:d[0][0][1]);
+	DEBUG cout<<d[ex][ey][0]<<' '<<d[ex][ey][1]<<'\n';
+	cout<<static_cast<if4>(d[ex][ey][0]<d[ex][ey][1]?d[ex][ey][0]:d[ex][ey][1]);
 
 	return 0;
 }
