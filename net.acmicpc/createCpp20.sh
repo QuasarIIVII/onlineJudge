@@ -12,7 +12,14 @@ if [ -d $1 ]; then
 fi
 
 mkdir $1 && cd $1
-cp ../a.cpp ../CMakeLists.txt .
-mkdir build && cd build && cmake ..
+cp "../a.cpp" "../CMakeLists.txt" .
+
+mkdir tests && cd tests
+cp "../../add.sh" .
+cd ..
+
+mkdir build && cd build
+cp "../../test.sh" .
+cmake ..
 cd ..
 nvim a.cpp
