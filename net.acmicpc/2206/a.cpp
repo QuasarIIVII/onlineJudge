@@ -217,7 +217,7 @@ int main(){
 		cout<<"\033[49m";
 	)
 
-	queue<S1,deque<S1,Alloc_static<S1,16384>>> q;
+	queue<S1,deque<S1,Alloc_static<S1>>> q;
 	q.emplace(sx,sy,0);
 	d[q.front().x][q.front().y]={1,1};
 
