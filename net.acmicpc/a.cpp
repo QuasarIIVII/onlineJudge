@@ -1,5 +1,7 @@
 #include<iostream>
+#include<sstream>
 #include<string>
+#include<string_view>
 #include<vector>
 #include<list>
 #include<stack>
@@ -30,6 +32,14 @@ using if1=int_fast8_t;	using if2=int_fast16_t;	using if4=int_fast32_t;	using if8
 bool debug=false;
 #else
 bool debug=true;
+#endif
+
+#ifdef ONLINE_JUDGE
+#define DEBUG_MACRO(x)
+#define DEBUG_MACRO_ELSE(x) x
+#else
+#define DEBUG_MACRO(x) x
+#define DEBUG_MACRO_ELSE(x)
 #endif
 
 #define DEBUG if(debug)
