@@ -75,13 +75,13 @@ int main(){
 
 	for(uf1 i=0;i<26;++i)for(uf1 j=0;j<26;++j){
 		if(i==j) continue;
-		switch(f - l[i][j].size()){
-		case 0:
+
+		if(f <= l[i][j].size()){
 			if(!vv[i][j])
 				vv[i][j]=true,
 				v.push_back({i,j});
-			break;
-		case 1:
+		}
+		if(f <= l[i][j].size()+1){
 			for(uf2 k=n-2; k--;){
 				uf2 p;
 				if(if1 r = mayError(s+k, i+97, j+97); r+1)
@@ -94,10 +94,7 @@ int main(){
 					vv[i][j]=true,
 					v.push_back({i,j});
 			}
-			break;
-		default:break;
 		}
-		
 	}
 
 	sort(v.begin(), v.end(), [](const auto& p, const auto& q){return p[0]==q[0] ? p[1]<q[1] :p[0]<q[0];});
