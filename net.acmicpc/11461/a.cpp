@@ -45,33 +45,99 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
-array<array<uf8, 5000>, 4> a;
+vector<vector<uf8>> a;
 
-void print(array<uf8, 5000> const& a, uf8 const n){
-	for(uf8 i=0; i<n; ++i)
-		cout<<a[i]<<' ';
+void print(vector<uf8>& a){
+	for(auto& i : a)
+		cout<<i<<' ';
 	cout<<'\n';
+}
+
+template<class RandomIt>
+requires is_same_v<
+	random_access_iterator_tag,
+	typename iterator_traits<RandomIt>::iterator_category
+>
+inline RandomIt f(RandomIt first, RandomIt last, const uf8 n){
+	RandomIt ff = first, ll = last;
+	RandomIt m = first + ((last - first) >> 1);
+
+	for(
+		;
+		first < last;
+		m = first + ((last - first) >> 1)
+	){
+//		DEBUG cout<<*m<<' '<<first-ff<<' '<<last-ff<<' '<<m-ff<<'\n';
+		if(*m == n)
+			return m;
+		if(*m < n)
+			first = m + 1;
+		else
+			last = m;
+	}
+
+	for(--m ; *m >= n; --m){
+		if(m == ff)
+			return ll;
+	}
+	return m;
+}
+
+uf8 g(const uf8 n, const uf2 m){
+	const decltype(a)::value_type::iterator it = f(a[m].begin(), a[m].end(), n);
+	const auto idx = it - a[m].begin();
+
+	if(it == a[m].end())
+		return  0;
+
+	if(!m)
+		return 1 + idx;
+
+	uf8 s = 0;
+	for(uf8 i = idx+1; i--;){
+		auto t = a[m][i] < n ? g(n - a[m][i], m-1) : 0;
+		s += t;
+	}
+	return s;
 }
 
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
 
+	a.resize(4);
+	a[0].reserve(5001);
+	a[1].reserve(5001);
+	a[2].reserve(5001);
+	a[3].reserve(5001);
+
 	uf8 n;
-	array<uf8, 2> m;
-	{
-		cin>>n>>m[0]>>m[1]>>m[2]>>m[3];
+	while(true){
+		array<uf2, 4> m;
+		cin>>n>>m[3]>>m[2]>>m[1]>>m[0];
+		if(!n) break;
 
 		for(uf2 j=4; j--;){
-			for(uf2 i=m[0]; i--;)
+			a[j].resize(m[j]);
+			for(uf2 i=m[j]; i--;)
 				cin>>a[j][i];
-			sort(a[0].begin(), a[0].begin()+m[0]);
+			sort(a[j].begin(), a[j].end(), less<uf8>());
 		}
 
-		for(uf2  i=4; i--;)
-			print(a[i], m[i]);
+		DEBUG for(uf2  i=4; i--;)
+			print(a[i]);
+
+		cout<<g(n, 3)<<'\n';
 	}
-	// bsearch
+
+/*	DEBUG_BLOCK(
+//		a[0] = a[3];
+//		m[0] = m[3];
+
+		cout<<	f(a[0].begin(), a[0].end(), 5) - a[0].begin()
+		<<' '<<*f(a[0].begin(), a[0].end(), 5)<<'\n';
+	);*/
+
 	return 0;
 }
 
