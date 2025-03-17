@@ -68,13 +68,19 @@ inline RandomIt f(RandomIt first, RandomIt last, const uf8 n){
 		m = first + ((last - first) >> 1)
 	){
 //		DEBUG cout<<*m<<' '<<first-ff<<' '<<last-ff<<' '<<m-ff<<'\n';
-		if(*m == n)
-			return m;
+		if(*m == n){
+			while(m != ll && *m == n)
+				++m;
+			return m-1;
+		}
 		if(*m < n)
 			first = m + 1;
 		else
 			last = m;
 	}
+
+	if(m == ff)
+		return ll;
 
 	for(--m ; *m >= n; --m){
 		if(m == ff)
@@ -84,6 +90,8 @@ inline RandomIt f(RandomIt first, RandomIt last, const uf8 n){
 }
 
 uf8 g(const uf8 n, const uf2 m){
+	DEBUG cout<<"call\t"<<n<<' '<<m<<endl;
+
 	const decltype(a)::value_type::iterator it = f(a[m].begin(), a[m].end(), n);
 	const auto idx = it - a[m].begin();
 
@@ -95,7 +103,7 @@ uf8 g(const uf8 n, const uf2 m){
 
 	uf8 s = 0;
 	for(uf8 i = idx+1; i--;){
-		auto t = a[m][i] < n ? g(n - a[m][i], m-1) : 0;
+		auto t = a[m][i] <= n ? g(n - a[m][i], m-1) : 0;
 		s += t;
 	}
 	return s;
@@ -106,10 +114,10 @@ int main(){
 	cin.tie(0);
 
 	a.resize(4);
-	a[0].reserve(5001);
-	a[1].reserve(5001);
-	a[2].reserve(5001);
-	a[3].reserve(5001);
+	a[0].reserve(5002);
+	a[1].reserve(5002);
+	a[2].reserve(5002);
+	a[3].reserve(5002);
 
 	uf8 n;
 	while(true){
@@ -129,14 +137,6 @@ int main(){
 
 		cout<<g(n, 3)<<'\n';
 	}
-
-/*	DEBUG_BLOCK(
-//		a[0] = a[3];
-//		m[0] = m[3];
-
-		cout<<	f(a[0].begin(), a[0].end(), 5) - a[0].begin()
-		<<' '<<*f(a[0].begin(), a[0].end(), 5)<<'\n';
-	);*/
 
 	return 0;
 }
