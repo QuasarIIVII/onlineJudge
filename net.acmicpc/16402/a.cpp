@@ -45,15 +45,37 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
-struct S;
-unordered_map<string_view, S> m;
 struct S{
-	S* p = this;
+	S* p;
 
 	bool isRoot() const{
 		return p==this;
 	}
+	S& root(){
+		DEBUG cout<<this<<" root() [p = "<<p<<"] : "<<flush;
+		while(p != p->p) p = p->p;
+		DEBUG cout<<p<<endl;
+		return *p;
+	}
+	S& join(S& to){
+		DEBUG cout<<this<<" join("<<&to<<")"<<endl;
+		p = &to.root();
+		return *this;
+	}
+	S& xchgrt(){
+		DEBUG cout<<this<<" xchgrt()"<<endl;
+		p = root().p = this;
+		return *this;
+	}
+
+	bool operator==(const S& other) const{
+		return this == &other;
+	}
 };
+
+unordered_map<string, S*> m;
+array<string, 500> ss;
+array<S, 500> objs;
 
 int main(){
 	ios::sync_with_stdio(false);
@@ -66,26 +88,49 @@ int main(){
 		cin.ignore(numeric_limits<std::streamsize>::max(), 'f');
 
 		cin>>s;
-		{
-			cout<<"in "<<s<<endl;
-			auto& t = m.emplace(s, S()).first->second;
-			t.p = &t;
-	
+		ss[i] = s;
+		m.emplace(s, &objs[i]);
+		auto &t = *m[ss[i]];
+		t.p = &t;
+		DEBUG cout<<ss[i]<<'\t'<<m[ss[i]]<<' '<<m[ss[i]]->p<<endl;
 	}
 
+	sort(ss.begin(), ss.begin()+n, greater());
+
 	for(uf4 i=nq; i--; ){
+		uf4 n;
 		string s, ss;
 
 		cin.ignore(numeric_limits<std::streamsize>::max(), 'f'), cin.ignore();
 		std::getline(cin, s, ',');
-		auto& p = m[s];
+		auto& p = *m[s];
 
 		cin.ignore(numeric_limits<std::streamsize>::max(), 'f'), cin.ignore();
 		std::getline(cin, ss, ',');
-		auto& q = m[ss];
-		cout<<"p "<<s<<' '<<&p<<' '<<p.p<<endl;
-		cout<<"q "<<ss<<' '<<&q<<' '<<q.p<<endl;
+		auto& q = *m[ss];
+
+		cin>>n;
+
+		if(p.root() == q.root()){
+			if(p.isRoot()){
+				if(n==2)q.xchgrt();
+			}else if(n==1)p.xchgrt();
+		}else
+			n==1 ? q.root().join(p) : p.root().join(q);
+
+		DEBUG cout<<endl;
 	}
+
+	ostringstream oss;
+	uf4 c=0;
+	for(uf4 i=n; i--; ){
+		DEBUG cout<<ss[i]<<'\t'<<m[ss[i]]<<' '<<m[ss[i]]->p<<endl;
+		if(m[ss[i]]->isRoot()){
+			++c;
+			oss<<"Kingdom of "<<ss[i]<<'\n';
+		}
+	}
+	cout<<c<<'\n'<<oss.str();
 	return 0;
 }
 
