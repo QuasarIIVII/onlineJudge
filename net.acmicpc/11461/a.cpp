@@ -45,9 +45,10 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
-vector<vector<uf8>> a;
+array<uf4, 5002> t;
+array<vector<uf4>, 2> a;
 
-void print(vector<uf8>& a){
+void print(vector<uf4>& a){
 	for(auto& i : a)
 		cout<<i<<' ';
 	cout<<'\n';
@@ -58,84 +59,82 @@ requires is_same_v<
 	random_access_iterator_tag,
 	typename iterator_traits<RandomIt>::iterator_category
 >
-inline RandomIt f(RandomIt first, RandomIt last, const uf8 n){
-	RandomIt ff = first, ll = last;
-	RandomIt m = first + ((last - first) >> 1);
+inline RandomIt f(const RandomIt first, const RandomIt last, const uf4 n){
+	RandomIt s = first, e = last;
+	RandomIt m = s + ((e - s) >> 1);
 
 	for(
 		;
-		first < last;
-		m = first + ((last - first) >> 1)
+		s < e;
+		m = s + ((e - s) >> 1)
 	){
-//		DEBUG cout<<*m<<' '<<first-ff<<' '<<last-ff<<' '<<m-ff<<'\n';
-		if(*m == n){
-			while(m != ll && *m == n)
-				++m;
-			return m-1;
-		}
-		if(*m < n)
-			first = m + 1;
+		if(*m <= n)
+			s = m+1;
 		else
-			last = m;
+			e = m;
 	}
 
-	if(m == ff)
-		return ll;
-
-	for(--m ; *m >= n; --m){
-		if(m == ff)
-			return ll;
-	}
 	return m;
-}
-
-uf8 g(const uf8 n, const uf2 m){
-	DEBUG cout<<"call\t"<<n<<' '<<m<<endl;
-
-	const decltype(a)::value_type::iterator it = f(a[m].begin(), a[m].end(), n);
-	const auto idx = it - a[m].begin();
-
-	if(it == a[m].end())
-		return  0;
-
-	if(!m)
-		return 1 + idx;
-
-	uf8 s = 0;
-	for(uf8 i = idx+1; i--;){
-		auto t = a[m][i] <= n ? g(n - a[m][i], m-1) : 0;
-		s += t;
-	}
-	return s;
 }
 
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
 
-	a.resize(4);
-	a[0].reserve(5002);
-	a[1].reserve(5002);
-	a[2].reserve(5002);
-	a[3].reserve(5002);
+	a[0].reserve(5001*5001);
+	a[1].reserve(5001*5001);
 
-	uf8 n;
+	uf4 n;
 	while(true){
 		array<uf2, 4> m;
 		cin>>n>>m[3]>>m[2]>>m[1]>>m[0];
 		if(!n) break;
 
-		for(uf2 j=4; j--;){
-			a[j].resize(m[j]);
-			for(uf2 i=m[j]; i--;)
-				cin>>a[j][i];
-			sort(a[j].begin(), a[j].end(), less<uf8>());
+		a[0].clear();
+		a[1].clear();
+
+		for(uf2 i = m[3]; i--;)
+			cin>>t[i];
+
+		for(uf2 i = m[2]; i--;){
+			uf4 x;
+			cin>>x;
+			for(uf2 i = m[3]; i--; )
+				a[0].push_back(x+t[i]);
 		}
 
-		DEBUG for(uf2  i=4; i--;)
-			print(a[i]);
+		for(uf2 i = m[1]; i--;)
+			cin>>t[i];
 
-		cout<<g(n, 3)<<'\n';
+		for(uf2 i = m[0]; i--;){
+			uf4 x;
+			cin>>x;
+			for(uf2 i = m[1]; i--; )
+				a[1].push_back(x+t[i]);
+		}
+
+		sort(a[0].begin(), a[0].end(), less<uf4>());
+		sort(a[1].begin(), a[1].end(), less<uf4>());
+
+		decltype(a)::value_type::iterator it = f(a[0].begin(), a[0].end(), n);
+		DEBUG cout<<"it - a[0].begin() = "<<it - a[0].begin()<<endl;
+		if(it == a[0].begin()){
+			cout<<0<<'\n';
+			continue;
+		}
+		uf4 s = 0;
+		for(auto i = a[0].begin(); i != it; ++i){
+			if(n < *i){
+				DEBUG cout<<"break\n";
+				break;
+			}
+
+			decltype(a)::value_type::iterator it = f(a[1].begin(), a[1].end(), n - *i);
+			DEBUG cout<<"it - a[1].begin() = "<<it - a[1].begin()<<endl;
+			s += it - a[1].begin();
+		}
+
+		cout<<s<<'\n';
 	}
 
 	return 0;
