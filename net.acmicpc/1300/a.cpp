@@ -53,6 +53,14 @@ constexpr auto sq = []() constexpr {
 	return a;
 }();
 
+constexpr auto f = []() constexpr {
+	array<f16, 100'001> f;
+	f[0] = 0;
+	for(auto i = f.begin()+1; i != f.end(); ++i)
+		*i = *(i-1) + static_cast<f16>(1) / (i - f.begin());
+	return f;
+}();
+
 auto v = []() constexpr {
 	vector<uf8> v;
 	v.reserve(200'000);
@@ -65,6 +73,8 @@ int main(){
 
 	uf8 n, k;
 	cin>>n>>k;
+	cout<<n*f[n]<<endl;
+	return 0;
 
 	const uf8 m = [&](){
 		uf8 m = 0;

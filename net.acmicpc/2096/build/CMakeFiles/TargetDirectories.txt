@@ -1,3 +1,0 @@
-/home/enyephy/A/onlineJudge/net.acmicpc/2096/build/CMakeFiles/a.dir
-/home/enyephy/A/onlineJudge/net.acmicpc/2096/build/CMakeFiles/edit_cache.dir
-/home/enyephy/A/onlineJudge/net.acmicpc/2096/build/CMakeFiles/rebuild_cache.dir
