@@ -63,9 +63,10 @@ ostream& operator<<(ostream& os, const list<S>& l){
 
 struct T{
 	list<S>::iterator s, e;
-	T* ptl, ptr;
+	T *ptl, *ptr;
+	uf1 a;
 
-	T(list<S>::iterator s, list<S>::iterator e) : s(s), e(e), ptl(nullptr), ptr(nullptr) {
+	T(list<S>::iterator s, list<S>::iterator e) : s(s), e(e), ptl(nullptr), ptr(nullptr){
 		list<S>::iterator op = s;
 		for(auto it = s; it != e; ++it){
 			if(auto opa = op->a&0xe0, ita = it->a&0xe0;opa < 0x60){
@@ -83,6 +84,18 @@ struct T{
 				cout<<'\t'<<&**op->p;
 			cout<<endl;
 		}
+
+		switch(op->a){
+		case 0x60:
+			op->a = 0;
+			op->p = next(op->p);
+			ptl=new T(next(op), *op->p);
+			break;
+		}
+	}
+	~T(){
+		if(ptl) delete ptl;
+		if(ptr) delete ptr;
 	}
 
 	void f(){
