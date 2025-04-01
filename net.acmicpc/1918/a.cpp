@@ -46,9 +46,11 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
+struct T;
 struct S{
 	if4 a;
 	optional<list<S>::iterator> p;
+	T* q;
 };
 
 ostream& operator<<(ostream& os, const list<S>& l){
@@ -66,16 +68,20 @@ struct T{
 	T *ptl, *ptr;
 	uf1 a;
 
-	T(list<S>::iterator s, list<S>::iterator e) : s(s), e(e), ptl(nullptr), ptr(nullptr){
+	T(list<S>& li, list<S>::iterator s, list<S>::iterator e) : s(s), e(e), ptl(nullptr), ptr(nullptr){
 		list<S>::iterator op = s;
-		for(auto it = s; it != e; ++it){
-			if(auto opa = op->a&0xe0, ita = it->a&0xe0;opa < 0x60){
-				if(opa < ita)
+		for(auto it = s; it != e;){
+			if(auto opa = op->a&0xe0, ita = it->a&0xe0; !it->a){
+				it = *it->p;
+				continue;
+			}else if(opa < 0x60){
+				if(opa <= ita && it->a != 0x61)
 					op = it;
 			}else{
 				if(it->a == 0x60)
 					op = it;
 			}
+			++it;
 		}
 
 		DEBUG{
@@ -87,9 +93,27 @@ struct T{
 
 		switch(op->a){
 		case 0x60:
+			a = 0x60;
 			op->a = 0;
-			op->p = next(op->p);
-			ptl=new T(next(op), *op->p);
+			op->p = next(*op->p);
+			op->q = new T(li, next(op), *op->p);
+			ptr = new T(li, s, e);
+			break;
+		case 0x40:
+		case 0x41:
+		case 0x20:
+		case 0x21:
+			a = op->a;
+			li.emplace(s, 0, e);
+			ptl = new T(li, s, op);
+			ptr = new T(li, next(op), e);
+			break;
+		default:
+			if(op->a){
+				a = op->a;
+				break;
+			}
+			ptl = op->q;
 			break;
 		}
 	}
@@ -99,6 +123,34 @@ struct T{
 	}
 
 	void f(){
+		if(ptl) ptl->f();
+		if(ptr) ptr->f();
+		if(!a) return;
+		if(a < 0x20){
+			cout<<static_cast<char>(a+0x40);
+			return;
+		}
+		switch(a){
+		case 0x20:
+			cout<<'*';
+			break;
+		case 0x21:
+			cout<<'/';
+			break;
+		case 0x40:
+			cout<<'+';
+			break;
+		case 0x41:
+			cout<<'-';
+			break;
+		}
+	}
+
+	void p(const uf4 lv = 0){
+		if(ptl)ptl->p(lv+1);
+		if(ptr)ptr->p(lv+1);
+		for(uf4 i=lv; i--; ) cout<<"|   ";
+		cout<<static_cast<uf2>(a)<<endl;
 	}
 };
 
@@ -123,16 +175,16 @@ int main(){
 				st.pop();
 				break;
 			case '*':
-				l.emplace_back(0x40, nullopt);
-				break;
-			case '/':
-				l.emplace_back(0x41, nullopt);
-				break;
-			case '+':
 				l.emplace_back(0x20, nullopt);
 				break;
-			case '-':
+			case '/':
 				l.emplace_back(0x21, nullopt);
+				break;
+			case '+':
+				l.emplace_back(0x40, nullopt);
+				break;
+			case '-':
+				l.emplace_back(0x41, nullopt);
 				break;
 			default:
 				if(c < 0x40) break;
@@ -141,7 +193,8 @@ int main(){
 		}
 	}
 	DEBUG cout << l << '\n';
-	T t(l.begin(), l.end());
+	T t(l, l.begin(), l.end());
+	t.f();
 	return 0;
 }
 
