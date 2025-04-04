@@ -1,4 +1,4 @@
-//; echo """
+//...; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -46,9 +46,59 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
+struct pair_cmp{
+	bool operator()(const pair<uf4, uf4>& a, const pair<uf4, uf4>& b) const{
+		return a.second > b.second;
+	}
+};
+
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
+
+	uf4 a[100'001];
+	priority_queue<pair<uf4, uf4>, vector<pair<uf4, uf4>>, pair_cmp> _pq, pq;
+
+	uf4 n, k;
+	cin>>n>>k;
+
+	{
+		array<uf4, 100'001> v;
+		for(uf4 i=n; i--;){
+			cin>>v[i];
+		}
+		for(uf4 i=n; i--;){
+			uf4 x;
+			cin>>x;
+			_pq.push({v[i], x});
+		}
+	}
+
+	for(uf4 l=1; l<=n; ++l){
+		memset(a, 0, sizeof(a));
+		pq = _pq;
+
+		uf8 s=0;
+		bool f=true;
+		for(uf4 i=k; i; pq.pop()){
+			if(pq.empty()){
+				f=false;
+				cout<<"-1 ";
+				break;
+			}
+
+			const auto& vpq = pq.top();
+			if(l <= a[vpq.first]) continue;
+
+			s += vpq.second;
+			++a[vpq.first];
+
+			--i;
+		}
+
+		if(f)
+			cout<<s<<' ';
+	}
 	return 0;
 }
 

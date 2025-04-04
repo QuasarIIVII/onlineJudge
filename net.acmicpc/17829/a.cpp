@@ -46,9 +46,32 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
+array<array<if2, 1024>, 1024> a;
+
+if2 f(uf4 x, uf4 y, uf2 n){
+	if(n==1) return a[x][y];
+	uf2 nn=n/2;
+	array<if2, 4> b{
+		f(x, y, nn),
+		f(x, y+nn, nn),
+		f(x+nn, y, nn),
+		f(x+nn, y+nn, nn)
+	};
+	sort(b.begin(), b.end());
+	DEBUG cout<<b[0]<<" "<<b[1]<<" "<<b[2]<<" "<<b[3]<<endl;
+	return b[2];
+}
+
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
+
+	uf2 n;
+	cin>>n;
+	for(uf2 i=n; i--;)for(uf2 j=n; j--;)
+		cin>>a[i][j];
+
+	cout<<f(0, 0, n);
 	return 0;
 }
 
