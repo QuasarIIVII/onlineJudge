@@ -1,4 +1,4 @@
-//...; echo """
+//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -46,98 +46,66 @@ constexpr bool debug=true;
 #define DEBUG if constexpr(debug)
 #define DEBUG_BLOCK(x) if constexpr(debug){x}
 
-template<class T, bool (*Cmp)(const T&, const T&)>
-struct cmp{
-	constexpr bool operator()(const T& a, const T& b) const{
-		return Cmp(a, b);
-	}
-};
-
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
 
-	array<
-		priority_queue<
-			uf4,
-			vector<uf4>,
-			less<uf4>
-		>,
-		100'001
-	> a;
-	array<uf4, 100'001> res{0,};
-	priority_queue<
-		pair<uf4, uf4>,
-		vector<pair<uf4, uf4>>,
-		cmp<pair<uf4, uf4>, [](const pair<uf4, uf4> &a, const pair<uf4, uf4> &b){
-			return (a.second > b.second);
-		}>
-	> pq;
+	array<bitset<128>, 100> key{bitset<128>(0)};
+	array<uf4, 100> rnk;
 
-	uf4 n, k;
-	cin>>n>>k;
+	uf4 n,m;
+	cin>>n>>m;
 
-	{
-		array<uf4, 100'001> v;
-		for(uf4 i=n; i--;){
-			cin>>v[i];
-		}
-		for(uf4 i=n; i--;){
+	for(uf4 i=0; i<n; ++i)
+		cin>>rnk[i];
+
+	for(uf4 i=0; i<n; ++i){
+		uf4 mi;
+		cin>>mi;
+		for(uf4 j=mi; j--;){
 			uf4 x;
 			cin>>x;
-			pq.push({v[i], x});
+			key[i].set(x);
+			DEBUG cout<<key[i].to_string()<<endl;
 		}
 	}
 
-	{
-		for(uf4 i=k; i; pq.pop()){
-			if(pq.empty()){
-				res[n-1] = -1;
-				break;
-			}
+	uf4 Q;
+	cin>>Q;
+	struct S{
+		uf4 n;
+		uf4 r;
 
-			const auto& vpq = pq.top();
-			if(n <= a[vpq.first].size()) continue;
+		S(uf4 n, uf4 r):n(n),r(r){}
+	};
 
-			a[vpq.first].push(vpq.second);
-			res[n-1] += vpq.second;
+	for(vector<S> v; Q--;){
+		v.clear();
+
+		uf4 x;
+		cin>>x;
+
+		for(uf4 i=n; i--;){
+			if(key[i].test(x))
+				v.emplace_back(i, rnk[i]);
 		}
-	}
 
-	for(uf4 l=n-1; l--; ){
-		if(res[l+1] == -1){
-			res[l] = -1;
+		if(v.empty()){
+			cout<<"-1\n";
 			continue;
 		}
-	}
 
-/*
-	for(uf4 l=1; l<=n; ++l){
-		memset(a, 0, sizeof(a));
-		pq = _pq;
+		sort(v.begin(), v.end(), [](const S& a, const S& b){
+			return a.r < b.r;
+		});
 
-		uf8 s=0;
-		bool f=true;
-		for(uf4 i=k; i; pq.pop()){
-			if(pq.empty()){
-				f=false;
-				cout<<"-1 ";
-				break;
-			}
-
-			const auto& vpq = pq.top();
-			if(l <= a[vpq.first]) continue;
-
-			s += vpq.second;
-			++a[vpq.first];
-
-			--i;
+		for(auto& i : v){
+			cout<<i.n+1<<" ";
 		}
+		cout<<"\n";
 
-		if(f)
-			cout<<s<<' ';
 	}
-*/
+
 	return 0;
 }
 
