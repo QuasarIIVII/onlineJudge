@@ -1,8 +1,8 @@
 ;indent setting : \t (0x09) which has width of 4 spaces (0x20)
 
 section .data align=16
-	s0 db "Hello World!",10,0
-	s1 db "%llx",10,0
+	s0 db "A",10,0
+	s1 db "B",10,0
 	s2 times 35 db 0x41, 0x42, 0x43
 	db "q", 0
 	s3 db 10,0
@@ -425,7 +425,7 @@ ql.io.os.write_u8:
 	ret
 
 main:
-	push qword 2
+	push qword 17
 	call ql.proc.begin
 
 	mov rdi, 12000000
@@ -436,20 +436,23 @@ main:
 	vpxor ymm0, ymm0, ymm0
 	xor edi, edi
 	mov rsi, [rbp-0x100]
-	vmpovdqu [rbp-0x20], ymm0
-	vmpovdqu [rbp-0x40], ymm0
-	vmpovdqu [rbp-0x60], ymm0
-	vmpovdqu [rbp-0x80], ymm0
-	vmpovdqu [rbp-0xa0], ymm0
-	vmpovdqu [rbp-0xc0], ymm0
-	vmpovdqu [rbp-0xe0], ymm0
-	vmpovdqu [rbp-0x100], ymm0
+	vmovdqu [rbp-0x20], ymm0
+	vmovdqu [rbp-0x40], ymm0
+	vmovdqu [rbp-0x60], ymm0
+	vmovdqu [rbp-0x80], ymm0
+	vmovdqu [rbp-0xa0], ymm0
+	vmovdqu [rbp-0xc0], ymm0
+	vmovdqu [rbp-0xe0], ymm0
+	vmovdqu [rbp-0x100], ymm0
 
 	call ql.io.is.read_iu8
+
 	mov edx, 1000000007
 	mov edi, eax
-
 	call f
+
+	mov edi, eax
+	call ql.io.os.write_u8
 
 	call ql.io.os.flush
 
@@ -468,30 +471,34 @@ f:
 	mov ecx, edx
 .f0:
 
-	cmp edi, 2
+	cmp di, 2
 	mov eax, 1
 	jl .ret
 
-	test di, di
 	mov eax, [rsi+4*rdi]
+	test eax, eax
 	jnz .ret
 
-	push di
-	push rsi
+	push rdi
 
+	dec di
 	call .f0
-	mov [rsi+4*rdi], eax
+	mov r8, [rsp]
+	mov [rsi+4*r8], eax
 
+	dec di
 	call .f0
+
+	pop rdi
+
 	xor edx, edx
 	add eax, [rsi+4*rdi]
-
-	pop rsi
+	inc eax
 	div ecx
-	pop di
 
 	mov [rsi+4*rdi], edx
 	mov eax, edx
 
-.ret
+
+.ret:
 	ret
