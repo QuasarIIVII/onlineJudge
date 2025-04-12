@@ -2,7 +2,7 @@
 
 section .data align=16
 	s0 db "Hello World!",10,0
-	s1 db "%llx",10,0
+	s1 db 0x20, 0
 	s2 times 35 db 0x41, 0x42, 0x43
 	db "q", 0
 	s3 db 10,0
@@ -425,7 +425,7 @@ ql.io.os.write_u8:
 	ret
 
 main:
-	push qword 25001
+	push qword 25002
 	call ql.proc.begin
 
 	mov rdi, 12000000
@@ -437,31 +437,109 @@ main:
 	call ql.io.is.read_iu8
 	mov r12d, eax
 
-	mov r13d, eax
 	xor al, al
+	mov r13d, r12d
 
 	.l0s:
-		mov [rbp+r13-200001], al
+		mov [rbp+2*r13-400002], al
 	.l0m:
 		mov dil, 1
 		call ql.io.is.read_iu8
 		dec r13d
 		jnz .l0s
 	.l0e:
-		mov [rbp-200001], al
-		mov byte [rbp-200002], 0
+		mov [rbp-400002], al
+		mov byte [rbp-400004], 0
+
+		xor al, al
+		mov r13d, r12d
 
 	.l1s:
-		mov [rbp+r13-400003], al
+		mov [rbp+2*r13-400002+1], al
 	.l1m:
 		mov dil, 1
 		call ql.io.is.read_iu8
 		dec r13d
-		jnz .l0s
+		jnz .l1s
 	.l1e:
-		mov [rbp-400003], al
-		mov byte [rbp-400004], 0
+		mov [rbp-400002+1], al
+		mov byte [rbp-400004+1], 0
 
+	lea r13, [r12+1]
+	xor eax, eax
+
+	bt r13d, 0
+	jc .c0m
+
+	.c0s:
+		.l2s:
+
+			mov dl, [rbp+2*r13-400004-2]
+			xor dl, [rbp+2*r13-400004+2-2]
+			movzx edx, dl
+			add eax, edx
+
+			mov dl, [rbp+2*r13-400004+1-2]
+			xor dl, [rbp+2*r13-400004+3-2]
+			movzx edx, dl
+			add eax, edx
+
+			bt r13d, 0
+			jnc .l2.c0m
+				mov dl, [rbp+2*r13-400004]
+				xor dl, [rbp+2*r13-400004+1]
+				movzx edx, dl
+				add eax, edx
+				jmp .l2.c0e
+			.l2.c0m:
+				bt word [rbp+2*r13-400004], 0
+				adc eax, 0
+
+				bt word [rbp+2*r13-400004+1], 0
+				adc eax, 0
+			.l2.c0e:
+
+			dec r13d
+			jnz .l2s
+		.l2e:
+		jmp .c0e
+	.c0m:
+		.l3s:
+
+			mov dl, [rbp+2*r13-400004-2]
+			xor dl, [rbp+2*r13-400004+2-2]
+			movzx edx, dl
+			add eax, edx
+
+			mov dl, [rbp+2*r13-400004+1-2]
+			xor dl, [rbp+2*r13-400004+3-2]
+			movzx edx, dl
+			add eax, edx
+
+			bt r13d, 0
+			jc .l3.c0m
+				mov dl, [rbp+2*r13-400004]
+				xor dl, [rbp+2*r13-400004+1]
+				movzx edx, dl
+				add eax, edx
+				jmp .l3.c0e
+			.l3.c0m:
+				bt word [rbp+2*r13-400004], 0
+				adc eax, 0
+
+				bt word [rbp+2*r13-400004+1], 0
+				adc eax, 0
+			.l3.c0e:
+
+			dec r13d
+			jnz .l3s
+		.l3e:
+	.c0e:
+
+	mov edi, eax
+	call ql.io.os.write_i8
+
+.ret:
 	call ql.io.os.flush
 
 	call ql.$io
