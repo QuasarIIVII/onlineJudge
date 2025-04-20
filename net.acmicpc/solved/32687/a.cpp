@@ -49,6 +49,19 @@ constexpr bool debug=true;
 constexpr array<uf8, 8> p10 = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000};
 uf8 p10_12 = p10[6] * p10[6];
 
+inline u8 fastdiv10(u8& a){
+	constexpr u8 rdx = 0xccccccccccccccdull;
+	u8 r_t0;
+	asm volatile(
+		"mulxq %[t_lo], %[t_lo], %[t_hi]" "\n"
+		"shrdq $63, %[t_hi], %[t_lo]"
+	:[t_hi]"=r"(r_t0), [t_lo]"+g"(a)
+	:"d"(rdx)
+	:
+	);
+	return a;
+}
+
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
@@ -62,7 +75,7 @@ int main(){
 		uf8 t;
 		for(t=i; t<=mx; t=t*p10[k]+i);
 
-		for(; p10[k-1]<=(t/=10) && mn<=t;)
+		for(; p10[k-1]<=fastdiv10(t) && mn<=t;)
 			if(!(t%m) && t<=mx)
 				++s;
 	}
