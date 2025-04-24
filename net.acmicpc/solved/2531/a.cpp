@@ -57,7 +57,7 @@ int main(){
 	for(uf4 i=0; i<n; ++i)
 		cin>>a[i];
 
-	array<uf2, 3000> t{0, };
+	array<uf2, 3001> t{0, };
 	uf4 s=0, mx;
 	bool f=false;
 	for(uf4 i=k; i--; ){
