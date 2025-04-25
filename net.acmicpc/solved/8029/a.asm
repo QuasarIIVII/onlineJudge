@@ -2,7 +2,7 @@
 
 section .data align=16
 	s0 db "Hello World!",10,0
-	s1 db "%llx",10,0
+	s1 db 0x20, 0
 	s2 times 35 db 0x41, 0x42, 0x43
 	db "q", 0
 	s3 db 10,0
@@ -438,8 +438,8 @@ main:
 		jnz .l1s
 	.l1e:
 
-	mov rdi, 13000
-	mov rsi, 13000
+	mov rdi, 150000
+	mov rsi, 400000
 	call ql.io
 	call ql.io.is.load
 
@@ -485,13 +485,36 @@ main:
 	mov rdx, rbp
 	call f
 
-	mov edi, 2
-	mov esi, 2
-	mov edx, 1
-	call g
+	vmovdqa xmm1, xmm0
+	vpextrb r12d, xmm1, 0
 
-	movzx edi, ax
-	call ql.io.os.write_i8
+	.l2s:
+		vpextrb r13d, xmm1, 0
+		dec r12b
+
+		.l2.l0s:
+			dec r13b
+
+			movzx edi, r12b
+			movzx esi, r13b
+			vpextrb edx, xmm1, 1
+			call g
+
+			movzx edi, ax
+			call ql.io.os.write_i8
+			lea rdi, [rel s1]
+			call ql.io.os.write_cstr
+		.l2.l0m:
+			test r13b, r13b
+			jnz .l2.l0s
+		.l2.l0e:
+
+		lea rdi, [rel s3]
+		call ql.io.os.write_cstr
+
+		test r12b, r12b
+		jnz .l2s
+	.l2e:
 
 	call ql.io.os.flush
 
@@ -545,9 +568,10 @@ f:
 	movzx esi, word [rsp]
 	movzx edi, word [rsp+2]
 
-	mov r8, [r9 + 8*rcx + t]
+	mov r8, [t + 8*rcx]
+	add r8, r9
 
-	mov edx, 8
+	mov edx, 9
 	shr dil, cl
 	sub dl, cl
 	shr sil, cl
@@ -565,17 +589,14 @@ f:
 	ret
 
 g:
-	; rdi : u1 x
-	; rsi : u1 y
-	; rdx : u1 r
-	movzx edi, dil
-	movzx esi, sil
-	movzx edx, dl
+	; rdi : u4 x
+	; rsi : u4 y
+	; rdx : u4 r
 
 	mov ax, dx
 	xor r10w, r10w
 	lea dx, [edi + edx + 1] ; x+r
-	lea cx, [esi + edx + 1] ; y+r
+	lea cx, [esi + eax + 1] ; y+r
 
 	cmp di, ax
 	cmovl di, r10w
@@ -645,8 +666,12 @@ g:
 	jg .lb1
 
 	.lb_0: ; inclusive
-		mov rax, [rbp + 8*r10 + t]
-		mov r11d, 8
+		push r8
+		push r9
+		push r11
+		mov rax, [t + 8*r10]
+		add rax, rbp
+		mov r11d, 9
 		shrx r8d, r8d, r10d
 		sub r11b, r10b ; r11b = 8 - [lv]r10b
 		shrx r9d, r9d, r10d
@@ -655,6 +680,9 @@ g:
 		add r8, rax
 		mov ax, [r8 + r9*2]
 
+		pop r11
+		pop r9
+		pop r8
 		ret
 
 	.lb0: ; exclusive
@@ -693,6 +721,8 @@ g:
 		movzx r8d, word [rsp + 4]
 		add rsp, 6
 		inc r10b
+
+		shl r11w, 1
 
 	ret
 
