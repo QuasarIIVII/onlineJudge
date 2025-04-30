@@ -20,6 +20,7 @@
 #include<algorithm>
 #include<cmath>
 #include<cstring>
+#include<span>
 
 using namespace std;
 
@@ -36,11 +37,11 @@ constexpr bool debug=true;
 #endif
 
 #ifdef ONLINE_JUDGE
-#define DEBUG_MACRO(x)
+#define DEBUG_MACRO(x) 0
 #define DEBUG_MACRO_ELSE(x) x
 #else
 #define DEBUG_MACRO(x) x
-#define DEBUG_MACRO_ELSE(x)
+#define DEBUG_MACRO_ELSE(x) 0
 #endif
 
 #define DEBUG if constexpr(debug)
@@ -53,19 +54,52 @@ struct cmp{
 	}
 };
 
+template<class T>
+requires std::is_trivially_copyable_v<T>
+class Hash{
+	constexpr static hash<string_view> h{};
+public:
+	size_t operator()(const T& t){
+		auto bytes = std::as_bytes(std::span<const T,1>(&t, 1));
+		return h(string_view(
+			reinterpret_cast<const char*>(bytes.data()),
+			bytes.size_bytes()
+		));
+	}
+};
+
+template<
+	class T,
+	class Cmp
+>
+class PQ{
+private:
+	struct S;
+	using umap = unordered_map<T, S, Hash<T>>;
+	using vec = vector<typename umap::iterator>;
+
+	struct S{
+		size_t n;
+		vec::iterator it;
+	};
+
+	umap data;
+	vec heap;
+	size_t size;
+
+public:
+	PQ() : size(){}
+};
+
 int main(){
 	ios::sync_with_stdio(false);
 	cin.tie(0);
 
 	array<
-		priority_queue<
-			uf4,
-			vector<uf4>,
-			less<uf4>
-		>,
+		priority_queue<uf4>,
 		100'001
 	> a;
-	array<uf4, 100'001> res{0,};
+	array<if8, 100'001> res{0,};
 	priority_queue<
 		pair<uf4, uf4>,
 		vector<pair<uf4, uf4>>,
@@ -73,6 +107,14 @@ int main(){
 			return (a.second > b.second);
 		}>
 	> pq;
+
+	priority_queue<
+		pair<uf4, uf4>,
+		vector<pair<uf4, uf4>>,
+		cmp<pair<uf4, uf4>, [](const pair<uf4, uf4> &a, const pair<uf4, uf4> &b){
+			return (a.second < b.second);
+		}>
+	> cpq;
 
 	uf4 n, k;
 	cin>>n>>k;
@@ -85,29 +127,53 @@ int main(){
 		for(uf4 i=n; i--;){
 			uf4 x;
 			cin>>x;
-			pq.push({v[i], x});
+			pq.emplace(v[i]-1, x);
 		}
 	}
 
-	{
-		for(uf4 i=k; i; pq.pop()){
+	for(uf4 i=k; i; pq.pop()){
+		if(pq.empty()){
+			res[n-1] = -1;
+			break;
+		}
+
+		const auto& vpq = pq.top();
+		if(n <= a[vpq.first].size()) continue;
+
+		a[vpq.first].push(vpq.second);
+		res[n-1] += vpq.second;
+		--i;
+	}
+
+	for(uf4 i=n; i--; )
+		cpq.emplace(i, a[i].size()),
+		DEBUG_MACRO(cout<<i<<' '<<a[i].size()<<'\t'<<(a[i].size() ? a[i].top() : -1)<<'\n');
+
+	DEBUG cout<<cpq.top().first<<' '<<cpq.top().second<<'\n';
+
+	for(uf4 l=n; --l; ){
+		if(res[l+1] == -1){
+			res[l] = -1;
+			continue;
+		}
+
+		if8 diff = 0;
+		while(1){
+			const auto& vcpq = cpq.top();
+			if(vcpq.second <= l) break;
+
 			if(pq.empty()){
-				res[n-1] = -1;
+				res[l] = -1;
 				break;
 			}
 
 			const auto& vpq = pq.top();
-			if(n <= a[vpq.first].size()) continue;
 
-			a[vpq.first].push(vpq.second);
-			res[n-1] += vpq.second;
-		}
-	}
+			diff += vpq.second - a[vcpq.first].top();
+			a[vcpq.first].pop();
 
-	for(uf4 l=n-1; l--; ){
-		if(res[l+1] == -1){
-			res[l] = -1;
-			continue;
+			cpq.emplace(vcpq.first, vcpq.second-1);
+			cpq.pop();
 		}
 	}
 
