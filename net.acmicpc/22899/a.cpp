@@ -88,7 +88,9 @@ private:
 	size_t size;
 
 public:
-	PQ() : size(){}
+	PQ() : size(0){}
+
+	void push
 };
 
 int main(){
