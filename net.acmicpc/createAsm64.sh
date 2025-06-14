@@ -6,7 +6,7 @@ if [ -z $1 ]; then
 	exit 1
 fi
 
-if [ -d $1 ]; then
+if [ -d $1 ] || [ -d "solved/$1" ]; then
 	echo "Folder $1 already exists"
 	exit 2
 fi

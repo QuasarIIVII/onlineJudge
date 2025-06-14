@@ -20,6 +20,7 @@
 #include<algorithm>
 #include<cmath>
 #include<cstring>
+//; echo """
 
 using namespace std;
 
@@ -44,11 +45,9 @@ constexpr bool debug=true;
 #endif
 
 #define DEBUG if constexpr(debug)
-#define DEBUG_BLOCK(x) if constexpr(debug){x}
 
 int main(){
-	ios::sync_with_stdio(false);
-	cin.tie(0);
+	cin.tie(0)->sync_with_stdio(false);
 	return 0;
 }
 //; echo """
