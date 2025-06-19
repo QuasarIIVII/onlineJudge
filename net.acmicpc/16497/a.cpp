@@ -49,17 +49,33 @@ constexpr bool debug=true;
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	uf4 l, r, k;
-	cin>>l>>r>>k;
+	uf2 n;
+	cin>>n;
 
-	switch(k){
-	case 2:{
-		uf4 x = l/2;
-		uf4 y = r-l+1;
-		cout<<x*y;
-		break;
+	array<uf2, 100> a, b;
+	for(uf2 i=n; i--;){
+		uf2 x, y;
+		cin>>x>>y;
+		a[i] = x, b[i] = y;
 	}
+
+	uf2 m;
+	cin>>m;
+
+	sort(a.begin(), a.begin()+n);
+	sort(b.begin(), b.begin()+n);
+
+	for(uf2 c=0, p=0, q=0;p<n && q<n;){
+		if(a[p] < b[q])
+			++p, ++c;
+		else ++q, --c;
+
+		if(m < c){
+			cout<<"0";
+			return 0;
+		}
 	}
+	cout<<"1";
 	return 0;
 }
 //; echo """
