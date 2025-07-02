@@ -80,7 +80,10 @@ public:
 	}
 
 	size_t find(const T& val){
-		return m[val] - d.begin();
+		if(const auto& it = m.find(val); it != m.end())
+			return it->second - d.begin();
+		else
+			return numeric_limits<size_t>::max();
 	}
 
 	void p(){
@@ -105,13 +108,12 @@ public:
 		size_t s, e, r;
 		const size_t E=d.size();
 		r = s = e = m[val] - d.begin();
-		m[val] = d.begin();
-		// cout<<"r: "<<val<<':'<<r<<' ';
+		// cout<<"r: "<<val<<':'<<r<<' '<<flush;
 
 		for(size_t t; (t=s*2)<E; s=t, e=e*2+1);
 
 		// cout<<"s: "<<s<<' ';
-		// cout<<"e: "<<e<<'\t';
+		// cout<<"e: "<<e<<'\t'<<flush;
 
 		e = min(e, E-1);
 		// cout<<"e: "<<e<<endl;
@@ -130,6 +132,7 @@ public:
 			swap(i, t);
 			i = t;
 		}
+		m[val] = d.begin();
 	}
 };
 
@@ -139,30 +142,40 @@ int main(){
 	uf4 N, Q;
 	cin>>N>>Q;
 
-	array<list<if4>, 100'001> a;
+	array<list<array<u4, 2>>, 100'001> a;
 
 	while(Q--){
-		uf4 p, q;
-		if4 x;
+		uf4 p, q, x;
 		cin>>p>>q>>x;
-		a[p-1].push_back(x);
-		a[q].push_back(-x);
+		a[p-1].push_back({Q+1, x});
+		a[q].push_back({Q+1, x});
 	}
 
-	unordered_map<array<uf4, 2>::iterator, uf4> m;
+	auto cmp = [](const auto& a, const auto& b){
+		return bit_cast<array<u4, 2>>(a)[0] < bit_cast<array<u4, 2>>(b)[0];
+	};
 
-	// PQ<pair<uf4, uf4>, 100'000, greater<pair<uf4, uf4>>> pq(make_pair(
-	// 	numeric_limits<uf4>::max(),
-	// 	numeric_limits<uf4>::max()
-	// ));
+	PQ<u8, 100'000, decltype(cmp)> pq(0, cmp);
 
 	for(uf4 i=0; i<N; ++i){
+		// DEBUG cout<<"i: "<<i<<endl;
 		for(auto& aa : a[i]){
-			if(aa < 0){
-				aa = -aa;
-			}else{
-			}
+			const u8 aaa = bit_cast<u8>(aa);
+			// DEBUG cout<<"pq: ", pq.p();
+			// DEBUG cout<<aa[0]<<','<<aa[1]<<' '<<pq.find(aaa)<<endl;
+			if(pq.find(aaa) == numeric_limits<size_t>::max())
+				pq.push(aaa);
+			else 
+				pq.pop(aaa);
 		}
+
+		// DEBUG cout<<"pq: ", pq.p();
+		// DEBUG cout<<"out: ";
+		if(const auto& top = pq.top(); top == 0)
+			cout<<"0 ";
+		else
+			cout<<bit_cast<array<u4, 2>>(top)[1]<<' ';
+		// DEBUG cout<<endl;
 	}
 	return 0;
 }
