@@ -13,7 +13,7 @@ fi
 
 mkdir $1 && cd $1
 mkdir build
-cp ../a.asm .
+cp ../a.nasm .
 cp ../Makefile ../a.sh build
 echo "1" > count
-nvim a.asm
+nvim a.nasm

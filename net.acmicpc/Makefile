@@ -4,7 +4,7 @@
 TARGET = a
 
 # Source and object files
-ASM_SOURCE = a.asm
+ASM_SOURCE = ../a.nasm
 OBJECT = a.o
 
 # Compiler and assembler
