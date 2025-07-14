@@ -1,11 +1,10 @@
 ;indent setting : \t (0x09) which has width of 4 spaces (0x20)
 
 section .data align=16
-	s0 db "Hello World!",10,0
-	s1 db "%llx",10,0
-	s2 times 35 db 0x41, 0x42, 0x43
-	db "q", 0
-	s3 db 10,0
+	s0 db "-1",10,0
+	s1 db 10,0
+	s2 db "0",10,0
+	s3 db "1",10,0
 
 ;	ql.io.s times 40000000 db 0
 
@@ -424,6 +423,11 @@ ql.io.os.write_u8:
 	pop rbp
 	ret
 
+section .data align=16
+	a0 dq 0, main.l0.s0#0, main.l0.s0#1, main.l0.s0#2, main.l0.s0#3, main.l0.s0#4
+
+section .text
+
 main:
 	push qword 2
 	call ql.proc.begin
@@ -431,7 +435,67 @@ main:
 	mov rdi, 12000000
 	mov rsi, 12000000
 	call ql.io
-;	call ql.io.is.load
+	call ql.io.is.load
+
+	mov rbx, rsp
+
+	mov dil, 1
+	call ql.io.is.read_iu8
+	mov r12d, eax
+
+	.l0s:
+		mov dil, 1
+		call ql.io.is.read_iu8
+		jmp [a0+8*rax]
+
+		.l0.s0#0:
+			mov dil, 1
+			call ql.io.is.read_iu8
+			push rax
+			jmp .l0m
+		.l0.s0#1:
+			cmp rbx, rsp
+			jz .l0.lb0
+			pop rdi
+			call ql.io.os.write_i8
+			lea rdi, [rel s1]
+			call ql.io.os.write_cstr
+			jmp .l0m
+		.l0.s0#2:
+			mov rdi, rbx
+			sub rdi, rsp
+			shr rdi, 3
+			call ql.io.os.write_i8
+			lea rdi, [rel s1]
+			call ql.io.os.write_cstr
+			jmp .l0m
+		.l0.s0#3:
+			mov rsi, s3
+			cmp rbx, rsp
+			mov rdi, s2
+			cmovz rdi, rsi
+			call ql.io.os.write_cstr
+			jmp .l0m
+		.l0.s0#4:
+			cmp rbx, rsp
+			jz .l0.lb0
+			mov rdi, [rsp]
+			call ql.io.os.write_i8
+			lea rdi, [rel s1]
+			call ql.io.os.write_cstr
+			jmp .l0m
+		.l0.s0#e:
+
+	.l0.lb0:
+		lea rdi, [rel s0]
+		call ql.io.os.write_cstr
+
+	.l0m:
+		dec r12d
+		jnz .l0s
+	.l0e:
+
+	mov rsp, rbx
 
 	call ql.io.os.flush
 
