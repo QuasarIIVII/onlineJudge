@@ -123,9 +123,9 @@ int main(){
 
 	{
 		array<uf4, 100'001> v;
-		for(uf4 i=n; i--;){
+		for(uf4 i=n; i--;)
 			cin>>v[i];
-		}
+
 		for(uf4 i=n; i--;){
 			uf4 x;
 			cin>>x;

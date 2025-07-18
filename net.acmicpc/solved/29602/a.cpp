@@ -49,22 +49,23 @@ constexpr bool debug=true;
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	uf2 n, m, k;
-	cin>>n>>m>>k;
+	uf2 n;
+	cin>>n;
+	array<pair<uf4, uf1>, 100> a;
+	for(uf2 i=0; i<n; ++i){
+		uf4 x;
+		cin>>x;
+		a[i] = {x, i};
+	}
 
-	auto a = []() constexpr {
-		array<array<uf2, 2000>, 2000> a;
-		array<uf2, 2000> aa;
-		aa.fill(numeric_limits<uf2>::max());
-		a.fill(aa);
-		return a;
-	}();
+	sort(a.begin(), a.begin()+n);
 
-	const auto b = [&](){
-		array<array<uf1, 2000>, 2000> b;
-	//	for(uf2 i=n; )
-		return b;
-	}();
+	array<uf1, 100> r;
+	for(uf2 i=n; i--;)
+		r[a[i].second] = i+1;
+
+	for(uf2 i=0; i<n; ++i)
+		cout<<static_cast<uf2>(r[i])<<' ';
 	return 0;
 }
 //; echo """
