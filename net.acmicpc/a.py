@@ -22,7 +22,7 @@ def process_line(line, label_map=None):
 			if label not in label_map["map"]:
 				label_map["map"][label] = label_map["count"]
 				label_map["count"] += 1
-			line = line.replace(label, ".L" + str(label_map["map"][label]) + (":" if is_def == ':' else ''))
+			line = line.replace(label, ".QL" + str(label_map["map"][label]) + (":" if is_def == ':' else ''))
 	
 	res = ""
 	for c in line:
