@@ -368,8 +368,8 @@ asm(
 inline void qio_init(){
 	asm(
 	".intel_syntax noprefix\n\t"
-	"	mov rdi, 12000000\n\t"
-	"	mov rsi, 12000000\n\t"
+	"	mov rdi, 1000000\n\t"
+	"	mov rsi, 1000000\n\t"
 	"	call ql.io\n\t"
 	".att_syntax prefix\n\t"
 	::: "rdi", "rsi"
@@ -523,7 +523,7 @@ private:
 
 public:
 	struct S{
-		const unordered_map<uf2, uf2> &in_m;
+		const array<uf2, 1'001> &in_m;
 		const array<uf2, 1'000> &pre, &in;
 		varray<C, 1'024> &obj;
 	};
@@ -533,7 +533,7 @@ public:
 
 	C(const S& init, const uf2 sz)
 	:n(init.pre[0])
-	,x(init.in_m.find(n)->second)
+	,x(init.in_m[n])
 	,l(
 		x
 		? (
@@ -566,7 +566,7 @@ public:
 		const uf2 in_s, const uf2 in_e
 	)
 	:n(init.pre[pre_s])
-	,x(init.in_m.find(n)->second)
+	,x(init.in_m[n])
 	,l(
 		in_s != x
 		? (
@@ -680,12 +680,10 @@ int main(){
 		T = x;
 	}
 
-	unordered_map<uf2, uf2> in_m;
+	array<uf2, 1'001> in_m;
 	varray<C, 1024> va;
-	in_m.reserve(1024);
 
 	while(T--){
-		in_m.clear();
 		va.clear();
 
 		uf2 n;
@@ -709,10 +707,10 @@ int main(){
 			qio_is_read_iu8(_x);
 			uf4 x = _x;
 			in[i] = x;
-			in_m.emplace(x, i);
+			in_m[x] = i;
 		}
 
-		C(C::S{in_m, pre, in, va}, in_m.size()).f();
+		C(C::S{in_m, pre, in, va}, n).f();
 		qio_os_write_cstr("\n");
 	}
 
