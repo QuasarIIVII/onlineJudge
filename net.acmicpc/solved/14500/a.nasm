@@ -224,7 +224,6 @@ ql.io.is.read_iu8:
 	mov r11, [r10+ql.io.is.offset]
 
 	xor eax, eax
-	mov r10, 10
 
 	movzx r8, byte [rsi]
 	xor ecx, ecx
@@ -244,9 +243,9 @@ ql.io.is.read_iu8:
 		jnc .l0e
 
 
-		mul r10
+		lea rdx, [rax*8+r8-0x30]
 		inc rsi
-		lea rax, [rax+r8-0x30]
+		lea rax, [rdx + rax*2]
 		jmp .l0s
 	.l0e:
 
@@ -254,9 +253,9 @@ ql.io.is.read_iu8:
 		neg rax
 	.c0e:
 
-	mov rcx, rdi
+	test dil, 0xff
 	mov r9, ql.io.isWhiteSpace
-	jecxz .c1e
+	jz .c1e
 		.l1s:
 			movzx edx, byte [rsi]
 			bt r9, rdx
@@ -426,52 +425,229 @@ ql.io.os.write_u8:
 
 section .data align=32
 	a:
-		dw 0,1,0,0, 1,1,0,0, 0,1,0,0, 0,0,0,0
-		dw 1,0,0,0, 1,1,0,0, 1,0,0,0, 0,0,0,0
-		dw 1,1,1,0, 0,1,0,0, 0,0,0,0, 0,0,0,0
-		dw 0,1,0,0, 1,1,1,0, 0,0,0,0, 0,0,0,0
+		dw +0,-1,+0,+0, -1,-1,+0,+0, +0,-1,+0,+0, +0,+0,+0,+0
+		dw -1,+0,+0,+0, -1,-1,+0,+0, -1,+0,+0,+0, +0,+0,+0,+0
+		dw -1,-1,-1,+0, +0,-1,+0,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw +0,-1,+0,+0, -1,-1,-1,+0, +0,+0,+0,+0, +0,+0,+0,+0
 
-		dw 1,1,0,0, 0,1,1,0, 0,0,0,0, 0,0,0,0
-		dw 0,1,1,0, 1,1,0,0, 0,0,0,0, 0,0,0,0
-		dw 0,1,0,0, 1,1,0,0, 1,0,0,0, 0,0,0,0
-		dw 1,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,0,0
+		dw -1,-1,+0,+0, +0,-1,-1,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw +0,-1,-1,+0, -1,-1,+0,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw +0,-1,+0,+0, -1,-1,+0,+0, -1,+0,+0,+0, +0,+0,+0,+0
+		dw -1,+0,+0,+0, -1,-1,+0,+0, +0,-1,+0,+0, +0,+0,+0,+0
 
-		dw 1,1,1,0, 0,0,1,0, 0,0,0,0, 0,0,0,0
-		dw 0,0,1,0, 1,1,1,0, 0,0,0,0, 0,0,0,0
-		dw 1,1,0,0, 1,0,0,0, 1,0,0,0, 0,0,0,0
-		dw 1,1,0,0, 0,1,0,0, 0,1,0,0, 0,0,0,0
-		dw 1,0,0,0, 1,1,1,0, 0,0,0,0, 0,0,0,0
-		dw 1,1,1,0, 1,0,0,0, 0,0,0,0, 0,0,0,0
-		dw 0,1,0,0, 0,1,0,0, 1,1,0,0, 0,0,0,0
-		dw 1,0,0,0, 1,0,0,0, 1,1,0,0, 0,0,0,0
+		dw -1,-1,-1,+0, +0,+0,-1,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw +0,+0,-1,+0, -1,-1,-1,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw -1,-1,+0,+0, -1,+0,+0,+0, -1,+0,+0,+0, +0,+0,+0,+0
+		dw -1,-1,+0,+0, +0,-1,+0,+0, +0,-1,+0,+0, +0,+0,+0,+0
+		dw -1,+0,+0,+0, -1,-1,-1,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw -1,-1,-1,+0, -1,+0,+0,+0, +0,+0,+0,+0, +0,+0,+0,+0
+		dw +0,-1,+0,+0, +0,-1,+0,+0, -1,-1,+0,+0, +0,+0,+0,+0
+		dw -1,+0,+0,+0, -1,+0,+0,+0, -1,-1,+0,+0, +0,+0,+0,+0
 
-		dw 1,1,0,0, 1,1,0,0, 0,0,0,0, 0,0,0,0
+		dw -1,-1,+0,+0, -1,-1,+0,+0, +0,+0,+0,+0, +0,+0,+0,+0
 
-		dw 1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0
-		dw 1,1,1,1, 0,0,0,0, 0,0,0,0, 0,0,0,0
+		dw -1,+0,+0,+0, -1,+0,+0,+0, -1,+0,+0,+0, -1,+0,+0,+0
+		dw -1,-1,-1,-1, +0,+0,+0,+0, +0,+0,+0,+0, +0,+0,+0,+0
 	b:
+		dw -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1
+
 
 section .text
 main:
-	push qword 32_000
+	push qword 32768
+	; 0 - 524_288
 	call ql.proc.begin
 
-	mov rdi, 12000000
-	mov rsi, 12000000
+	mov rdi, 1_500_000
+	mov rsi, 16
 	call ql.io
 	call ql.io.is.load
 
 	mov dil, 1
 	call ql.io.is.read_iu8
 	mov r12w, ax
-	lea r14w, [eax-3]
 
 	mov dil, 1
 	call ql.io.is.read_iu8
 	mov r13w, ax
-	lea r15w, [eax-3]
 
-	lea rbx, [rbp-1024]
+	lea rbx, [rbp-524_288]
+	mov r14w, r12w
+
+	vpxor ymm0, ymm0
+	.l0s:
+		movzx r15d, r13w
+		movdqu [rbx + r15*2], xmm0
+
+		.l0.l0s:
+			mov dil, 1
+			call ql.io.is.read_iu8
+			mov [rbx + r15*2 - 2], ax
+		.l0.l0m:
+			dec r15w
+			jnz .l0.l0s
+		.l0.l0e:
+	.l0m:
+		dec r14w
+		lea rbx, [rbx + 1024]
+		jnz .l0s
+	.l0e:
+
+	vmovdqu [rbx+0x000], ymm0
+	vmovdqu [rbx+0x020], ymm0
+	vmovdqu [rbx+0x040], ymm0
+	vmovdqu [rbx+0x060], ymm0
+	vmovdqu [rbx+0x080], ymm0
+	vmovdqu [rbx+0x0a0], ymm0
+	vmovdqu [rbx+0x0c0], ymm0
+	vmovdqu [rbx+0x0e0], ymm0
+	vmovdqu [rbx+0x100], ymm0
+	vmovdqu [rbx+0x120], ymm0
+	vmovdqu [rbx+0x140], ymm0
+	vmovdqu [rbx+0x160], ymm0
+	vmovdqu [rbx+0x180], ymm0
+	vmovdqu [rbx+0x1a0], ymm0
+	vmovdqu [rbx+0x1c0], ymm0
+	vmovdqu [rbx+0x1e0], ymm0
+	vmovdqu [rbx+0x200], ymm0
+	vmovdqu [rbx+0x220], ymm0
+	vmovdqu [rbx+0x240], ymm0
+	vmovdqu [rbx+0x260], ymm0
+	vmovdqu [rbx+0x280], ymm0
+	vmovdqu [rbx+0x2a0], ymm0
+	vmovdqu [rbx+0x2c0], ymm0
+	vmovdqu [rbx+0x2e0], ymm0
+	vmovdqu [rbx+0x300], ymm0
+	vmovdqu [rbx+0x320], ymm0
+	vmovdqu [rbx+0x340], ymm0
+	vmovdqu [rbx+0x360], ymm0
+	vmovdqu [rbx+0x380], ymm0
+	vmovdqu [rbx+0x3a0], ymm0
+	vmovdqu [rbx+0x3c0], ymm0
+	vmovdqu [rbx+0x3e0], ymm0
+	vmovdqu [rbx+0x400], ymm0
+	vmovdqu [rbx+0x420], ymm0
+	vmovdqu [rbx+0x440], ymm0
+	vmovdqu [rbx+0x460], ymm0
+	vmovdqu [rbx+0x480], ymm0
+	vmovdqu [rbx+0x4a0], ymm0
+	vmovdqu [rbx+0x4c0], ymm0
+	vmovdqu [rbx+0x4e0], ymm0
+	vmovdqu [rbx+0x500], ymm0
+	vmovdqu [rbx+0x520], ymm0
+	vmovdqu [rbx+0x540], ymm0
+	vmovdqu [rbx+0x560], ymm0
+	vmovdqu [rbx+0x580], ymm0
+	vmovdqu [rbx+0x5a0], ymm0
+	vmovdqu [rbx+0x5c0], ymm0
+	vmovdqu [rbx+0x5e0], ymm0
+	vmovdqu [rbx+0x600], ymm0
+	vmovdqu [rbx+0x620], ymm0
+	vmovdqu [rbx+0x640], ymm0
+	vmovdqu [rbx+0x660], ymm0
+	vmovdqu [rbx+0x680], ymm0
+	vmovdqu [rbx+0x6a0], ymm0
+	vmovdqu [rbx+0x6c0], ymm0
+	vmovdqu [rbx+0x6e0], ymm0
+	vmovdqu [rbx+0x700], ymm0
+	vmovdqu [rbx+0x720], ymm0
+	vmovdqu [rbx+0x740], ymm0
+	vmovdqu [rbx+0x760], ymm0
+	vmovdqu [rbx+0x780], ymm0
+	vmovdqu [rbx+0x7a0], ymm0
+	vmovdqu [rbx+0x7c0], ymm0
+	vmovdqu [rbx+0x7e0], ymm0
+	vmovdqu [rbx+0x800], ymm0
+	vmovdqu [rbx+0x820], ymm0
+	vmovdqu [rbx+0x840], ymm0
+	vmovdqu [rbx+0x860], ymm0
+	vmovdqu [rbx+0x880], ymm0
+	vmovdqu [rbx+0x8a0], ymm0
+	vmovdqu [rbx+0x8c0], ymm0
+	vmovdqu [rbx+0x8e0], ymm0
+	vmovdqu [rbx+0x900], ymm0
+	vmovdqu [rbx+0x920], ymm0
+	vmovdqu [rbx+0x940], ymm0
+	vmovdqu [rbx+0x960], ymm0
+	vmovdqu [rbx+0x980], ymm0
+	vmovdqu [rbx+0x9a0], ymm0
+	vmovdqu [rbx+0x9c0], ymm0
+	vmovdqu [rbx+0x9e0], ymm0
+	vmovdqu [rbx+0xa00], ymm0
+	vmovdqu [rbx+0xa20], ymm0
+	vmovdqu [rbx+0xa40], ymm0
+	vmovdqu [rbx+0xa60], ymm0
+	vmovdqu [rbx+0xa80], ymm0
+	vmovdqu [rbx+0xaa0], ymm0
+	vmovdqu [rbx+0xac0], ymm0
+	vmovdqu [rbx+0xae0], ymm0
+	vmovdqu [rbx+0xb00], ymm0
+	vmovdqu [rbx+0xb20], ymm0
+	vmovdqu [rbx+0xb40], ymm0
+	vmovdqu [rbx+0xb60], ymm0
+	vmovdqu [rbx+0xb80], ymm0
+	vmovdqu [rbx+0xba0], ymm0
+	vmovdqu [rbx+0xbc0], ymm0
+	vmovdqu [rbx+0xbe0], ymm0
+
+	mov cx, r12w
+	lea rbx, [rbp-524_288]
+	xor rax, rax
+
+	lea r14w, [r13d + 1]
+	and r14w, 0xfffe
+
+	.l1s:
+		movzx edx, r14w
+
+		.l1.l0s:
+			vpinsrq xmm1, [rbx + 2*rdx - 2 +1024*2], 0
+			vpinsrq xmm0, [rbx + 2*rdx - 2 +1024*0], 0
+			vpinsrq xmm1, [rbx + 2*rdx - 2 +1024*3], 1
+			vpinsrq xmm0, [rbx + 2*rdx - 2 +1024*1], 1
+			vperm2f128 ymm0, ymm0, ymm1, 0x20
+
+			vpinsrq xmm3, [rbx + 2*rdx - 4 +1024*2], 0
+			vpinsrq xmm2, [rbx + 2*rdx - 4 +1024*0], 0
+			vpinsrq xmm3, [rbx + 2*rdx - 4 +1024*3], 1
+			vpinsrq xmm2, [rbx + 2*rdx - 4 +1024*1], 1
+			vperm2f128 ymm2, ymm2, ymm3, 0x20
+
+			lea rsi, [rel a]
+			lea rdi, [rel b]
+			.l1.l0.l0s:
+				vpand ymm1, ymm0, [rsi]
+				vpand ymm3, ymm2, [rsi]
+				vphaddw ymm1, ymm1, ymm3
+				vpermq ymm1, ymm1, 0b11011000
+				vphaddw ymm1, ymm1, ymm1
+				vphaddw ymm1, ymm1, ymm1
+				vphaddw ymm1, ymm1, ymm1
+				vpermq ymm1, ymm1, 0b11011000
+
+				vpextrw r8d, xmm1, 0
+				vpextrw r9d, xmm1, 4
+				cmp ax, r8w
+				cmovb ax, r8w
+				cmp ax, r9w
+				cmovb ax, r9w
+			.l1.l0.l0m:
+				add rsi, 32
+				cmp rsi, rdi
+				jnz .l1.l0.l0s
+			.l1.l0.l0e:
+		.l1.l0m:
+			sub dx, 2
+			jnz .l1.l0s
+		.l1.l0e:
+	.l1m:
+		dec cx
+		lea rbx, [rbx+1024]
+		jnz .l1s
+	.l1e:
+
+	movzx edi, ax
+	call ql.io.os.write_u8
 
 	call ql.io.os.flush
 
