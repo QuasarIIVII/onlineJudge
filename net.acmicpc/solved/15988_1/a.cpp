@@ -396,6 +396,20 @@ inline void qio_is_read_iu8(uint64_t& ret){
 	);
 }
 
+inline uint64_t qio_is_read_iu8(){
+	uint64_t ret;
+	asm volatile(
+	".intel_syntax noprefix\n\t"
+	"	mov dil, 1\n\t"
+	"	call ql.io.is.read_iu8\n\t"
+	"	mov %0, rax\n\t"
+	".att_syntax prefix\n\t"
+	: "=r"(ret)
+	:: "rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10","r11"
+	);
+	return ret;
+}
+
 inline void qio_os_write_cstr(const char *str){
 	asm(
 	".intel_syntax noprefix\n\t"
@@ -518,8 +532,12 @@ int main(){
 		if(a[i]>=1'000'000'009) a[i]-=1'000'000'009;
 	}
 
-	uf4 T, x;
-	qio_is_read_iu8(T);
+	uf4 T = qio_is_read_iu8();
+	while(T--){
+		qio_os_write_u8(a[qio_is_read_iu8()]);
+		qio_os_write_cstr("\n");
+	}
+
 	qio_flush();
 	qio_close();
 	return 0;
