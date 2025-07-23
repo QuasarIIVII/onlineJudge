@@ -215,9 +215,9 @@ asm(
 "			jge .QL2\n\t"
 "			bt r9, r8\n\t"
 "			jnc .QL2\n\t"
-"			mul r10\n\t"
+"			lea rdx, [rax*8+r8-0x30]\n\t"
 "			inc rsi\n\t"
-"			lea rax, [rax+r8-0x30]\n\t"
+"			lea rax, [rdx + rax*2]\n\t"
 "			jmp .QL1\n\t"
 "		.QL2:\n\t"
 "		jecxz .QL3\n\t"
@@ -350,20 +350,6 @@ asm(
 ".att_syntax prefix\n\t"
 "nop\n\t"
 );
-
-/*
-"	main:\n\t"
-"		push QWORD PTR 2\n\t"
-"		call ql.proc.begin\n\t"
-"		mov rdi, 12000000\n\t"
-"		mov rsi, 12000000\n\t"
-"		call ql.io\n\t"
-"		call ql.io.os.flush\n\t"
-"		call ql.__dollar__io\n\t"
-"		xor eax,eax\n\t"
-"		call ql.proc.end\n\t"
-"		ret\n\t"
-*/
 
 inline void qio_init(){
 	asm(
@@ -515,204 +501,11 @@ public:
 	}
 };
 
-class C{
-private:
-	const uf2 n;
-	const uf2 x;
-	const C *l, *r;
-
-public:
-	struct S{
-		const array<uf2, 1'001> &in_m;
-		const array<uf2, 1'000> &pre, &in;
-		varray<C, 1'024> &obj;
-	};
-
-public:
-	C(): n(0), x(0), l(nullptr), r(nullptr){ memset(this, 0, sizeof(C)); }
-
-	C(const S& init, const uf2 sz)
-	:n(init.pre[0])
-	,x(init.in_m[n])
-	,l(
-		x
-		? (
-			init.obj.push_back(C(
-				init,
-				1, x+1u,
-				0, x
-			)),
-			&init.obj.back()
-		)
-		: nullptr
-	)
-	,r(
-		x+1u != sz
-		? (
-			init.obj.push_back(C(
-				init,
-				x+1u, sz,
-				x+1u, sz
-			)),
-			&init.obj.back()
-		)
-		: nullptr
-	)
-	{}
-
-	C(
-		const S& init,
-		const uf2 pre_s, const uf2 pre_e,
-		const uf2 in_s, const uf2 in_e
-	)
-	:n(init.pre[pre_s])
-	,x(init.in_m[n])
-	,l(
-		in_s != x
-		? (
-			init.obj.push_back(C(
-				init,
-				pre_s+1u, pre_s+1u + x-in_s,
-				in_s, x
-			)),
-			&init.obj.back()
-		)
-		: nullptr
-	)
-	,r(
-		x+1u != in_e
-		? (
-			init.obj.push_back(C(
-				init,
-				pre_s + x-in_s+1u, pre_e,
-				x+1u, in_e
-			)),
-			&init.obj.back()
-		)
-		: nullptr
-	)
-	{
-		DEBUG cout<<"C::C(2): "<<pre_s<<':'<<pre_e<<'\t'<<in_s<<':'<<in_e<<endl;
-	}
-
-	C& operator=(C&& other){
-		memcpy(this, &other, sizeof(C));
-		return *this;
-	}
-
-	void f() const {
-		if(l) l->f();
-		if(r) r->f();
-		qio_os_write_u8(n);
-		qio_os_write_cstr(" ");
-	}
-};
-
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
 	qio_init();
 	qio_is_load();
-
-	DEBUG{
-		struct X{
-			vector<int> v;
-		};
-
-		varray<X, 100> cva;
-		varray<int, 100> va{1,2,3};
-		cout<<va.size()<<' '<<va.capacity()<<endl;
-		cout<<(va.back()=4)<<' '<<va.back()<<endl;
-
-		for(const auto& a:va) cout<<a<<' ';
-		cout<<endl;
-
-		{
-			cout<<"==== 1 ====\n";
-			varray<int, 100> va1(va);
-			for(auto it = va1.crbegin(); it != va1.crend() || (cout<<endl, 0); it++)
-				cout<<*it<<' ';
-		}
-
-		{
-			cout<<"==== 2 ====\n";
-			varray<int, 100> va1{1,2,9};
-			va.swap(va1);
-			for(const auto& a:va) cout<<a<<' ';
-			cout<<endl;
-			for(const auto& a:va1) cout<<a<<' ';
-			cout<<endl;
-
-			va1 = va;
-			for(const auto& a:va1) cout<<a<<' ';
-			cout<<endl;
-		}
-
-		{
-			cout<<"==== 3 ====\n";
-			struct Y{
-				int n;
-				Y():n(9){}
-				Y(int n):n(n){}
-			};
-
-			varray<Y, 100> va1{1,2,3};
-			va1 = {1,4,6,9};
-			Y y;
-			va1.push_back(y);
-			va1.push_back(123);
-			va1.resize(8);
-
-			for(const auto& a:va1) cout<<a.n<<' ';
-			cout<<endl;
-
-			va1.clear();
-			cout<<va1.size()<<endl;
-		}
-
-		// return 0;
-	}
-
-	uf4 T;
-	{
-		u8 x;
-		qio_is_read_iu8(x);
-		T = x;
-	}
-
-	array<uf2, 1'001> in_m;
-	varray<C, 1024> va;
-
-	while(T--){
-		va.clear();
-
-		uf2 n;
-		array<uf2, 1'000> pre, in;
-
-		[[assume(n <= 1000)]];
-		{
-			u8 x;
-			qio_is_read_iu8(x);
-			n = x;
-		}
-
-		for(uf2 i=0; i<n; ++i){
-			u8 x;
-			qio_is_read_iu8(x);
-			pre[i] = x;
-		}
-
-		for(uf2 i=0; i<n; ++i){
-			u8 _x;
-			qio_is_read_iu8(_x);
-			uf4 x = _x;
-			in[i] = x;
-			in_m[x] = i;
-		}
-
-		C(C::S{in_m, pre, in, va}, n).f();
-		qio_os_write_cstr("\n");
-	}
 
 	qio_flush();
 	qio_close();
