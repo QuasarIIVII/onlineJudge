@@ -1,4 +1,4 @@
-//; echo ""
+//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -49,60 +49,67 @@ constexpr bool debug=true;
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	uf2 n, Q;
-	cin>>n>>Q;
+	uf2 n;
+	unordered_set<uf8> s;
+	unordered_map<uf8, pair<uf8, uf8>> m;
 
-	array<uf2, 2000> sta, stb;
-	uf2 pa=0, pb=0;
-	uf2 cur=-1;
+	cin>>n;
+	s.reserve(n);
+	m.reserve(n);
 
-	while(Q--){
-		string s;
-		cin>>s;
+	for(uf2 i=n; i--;){
+		uf8 x;
+		cin>>x;
+		s.emplace(x);
+		m.emplace(x, make_pair(0, 0));
+	}
 
-		switch(s[0]){
-		default: __builtin_unreachable();
-		case 'B':
-			if(!pa) break;
-			stb[pb++] = cur;
-			cur = sta[--pa];
-			break;
-		case 'F':
-			if(!pb) break;
-			sta[pa++] = cur;
-			cur = stb[--pb];
-			break;
-		case 'A':
-			pb = 0;
-			if(cur != uf2(-1))
-				sta[pa++] = cur;
-			cin>>cur;
-			break;
-		case 'C':{
-			if(!pa) break;
-			const uf2 tpa = pa;
+	for(const auto& a : s){
+		{
+			if(a%3) goto lb0;
+			uf8 b = a/3;
+			if(!s.contains(b)) goto lb0;
 
-			pa = 1;
-			for(uf2 i=1; i<tpa; ++i){
-				if(sta[i] != sta[pa-1])
-					sta[pa++] = sta[i];
-			}
-			break;
+			m[a].first = b;
 		}
+	lb0:
+		{
+			uf8 b = a*2;
+			if(!s.contains(b)) continue;
+
+			m[a].second = b;
 		}
 	}
 
-	cout<<cur<<'\n';
-	if(pa){
-		for(uf2 i=pa; i--;)cout<<sta[i]<<' ';
-		cout<<'\n';
+	array<uf8, 100> r;
+
+	const function<bool(uf8, uf2)> f = [&](uf8 x, uf2 cnt) -> bool {
+		if(!cnt){
+			r[cnt] = x;
+			return true;
+		}
+
+		if(m[x].first && f(m[x].first, cnt-1)){
+			r[cnt] = x;
+			return true;
+		}
+
+		if(m[x].second && f(m[x].second, cnt-1)){
+			r[cnt] = x;
+			return true;
+		}
+
+		return false;
+	};
+
+	for(const auto& a : s){
+		if(f(a, n-1))
+			break;
 	}
-	else cout<<"-1\n";
-	if(pb){
-		for(uf2 i=0; i<pb; ++i)cout<<stb[i]<<' ';
-		cout<<'\n';
-	}
-	else cout<<"-1\n";
+
+	for(uf2 i=n; i--;)
+		cout<<r[i]<<" ";
+
 	return 0;
 }
 //; echo """
