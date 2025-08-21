@@ -49,43 +49,46 @@ constexpr bool debug=true;
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	uf2 n, Q;
-	cin>>n>>Q;
+	uf2 _;
 
-	array<uf2, 2000> sta, stb;
-	uf2 pa=0, pb=0;
-	uf2 cur=-1;
+	uf4 pbw=0, pfw=0;
+	if4 cur = numeric_limits<if4>::max();
+	array<if4, 2001> bw, fw;
+
+	uf2 Q;
+	cin>>_>>Q;
+	string s;
 
 	while(Q--){
-		string s;
 		cin>>s;
 
 		switch(s[0]){
-		default: __builtin_unreachable();
 		case 'B':
-			if(!pa) break;
-			stb[pb++] = cur;
-			cur = sta[--pa];
+			if(!pbw) break;
+			fw[pfw++] = cur;
+			cur = bw[--pbw];
 			break;
 		case 'F':
-			if(!pb) break;
-			sta[pa++] = cur;
-			cur = stb[--pb];
+			if(!pfw) break;
+			bw[pbw++] = cur;
+			cur = fw[--pfw];
 			break;
 		case 'A':
-			pb = 0;
-			if(cur != uf2(-1))
-				sta[pa++] = cur;
+			pfw = 0;
+			if(cur != numeric_limits<if4>::max())
+				bw[pbw++] = cur;
 			cin>>cur;
 			break;
 		case 'C':{
-			if(!pa) break;
-			const uf2 tpa = pa;
+			if(pbw < 2) break;
 
-			pa = 1;
-			for(uf2 i=1; i<tpa; ++i){
-				if(sta[i] != sta[pa-1])
-					sta[pa++] = sta[i];
+			uf2 tsz = pbw;
+
+			pbw = 1;
+			for(uf2 i = 1; i<tsz; ++i){
+				if(bw[pbw-1] == bw[i])
+					continue;
+				bw[pbw++] = bw[i];
 			}
 			break;
 		}
@@ -93,16 +96,10 @@ int main(){
 	}
 
 	cout<<cur<<'\n';
-	if(pa){
-		for(uf2 i=pa; i--;)cout<<sta[i]<<' ';
-		cout<<'\n';
-	}
+	if(pbw) while(pbw-- || (cout<<'\n', 0)) cout<<bw[pbw]<<' ';
 	else cout<<"-1\n";
-	if(pb){
-		for(uf2 i=0; i<pb; ++i)cout<<stb[i]<<' ';
-		cout<<'\n';
-	}
+	// if(pfw) for(uf2 i=0; i<pfw || (cout<<'\n', 0); ++i) cout<<fw[i]<<' ';
+	if(pfw) while(pfw-- || (cout<<'\n', 0)) cout<<fw[pfw]<<' ';
 	else cout<<"-1\n";
-	return 0;
 }
 //; echo """
