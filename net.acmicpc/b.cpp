@@ -18,6 +18,7 @@
 #include<unordered_set>
 #include<functional>
 #include<algorithm>
+#include<stdfloat>
 #include<cmath>
 #include<cstring>
 //; echo """
@@ -422,7 +423,7 @@ using namespace std;
 
 using u1=uint8_t;	using u2=uint16_t;	using u4=uint32_t;	using u8=uint64_t;	using u16=unsigned __int128;
 using i1=int8_t;	using i2=int16_t;	using i4=int32_t;	using i8=int64_t;	using i16=__int128;
-										using f4=float;		using f8=double;	using f16=long double;
+										using f4=float32_t;	using f8=float64_t;	using f16=float128_t;
 using uf1=uint_fast8_t;	using uf2=uint_fast16_t;using uf4=uint_fast32_t;using uf8=uint_fast64_t;
 using if1=int_fast8_t;	using if2=int_fast16_t;	using if4=int_fast32_t;	using if8=int_fast64_t;
 
