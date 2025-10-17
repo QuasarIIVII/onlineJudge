@@ -443,6 +443,25 @@ constexpr bool debug=true;
 
 #define DEBUG if constexpr(debug)
 
+template<size_t N>
+inline size_t popcount(const bitset<N> &a){
+	const u8 *p = reinterpret_cast<const u8*>(&a);
+	u8 r = 0;
+	for(size_t i = sizeof(a)/8; i--;){
+		u8 t;
+		asm volatile(
+		".intel_syntax noprefix\n\t"
+		"popcnt %1, [%2 + 8*%3]\n\r"
+		"add %0, %1\n\t"
+		".att_syntax prefix\n\t"
+		: "+g"(r), "=r"(t)
+		: "r"(p), "r"(i)
+		);
+	}
+
+	return r;
+}
+
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
@@ -469,7 +488,7 @@ int main(){
 
 	uf4 r = 0;
 	for(uf4 i=n; --i;)for(uf4 j=i; j--;){
-		uf4 c = (a[i]&a[j]).count();
+		uf4 c = popcount(a[i]&a[j]);
 		r += c*(c-1)/2;
 	}
 
