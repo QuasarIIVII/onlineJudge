@@ -1,4 +1,4 @@
-//...; echo """
+//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -18,15 +18,16 @@
 #include<unordered_set>
 #include<functional>
 #include<algorithm>
+#include<stdfloat>
 #include<cmath>
 #include<cstring>
-#include<span>
+//; echo """
 
 using namespace std;
 
 using u1=uint8_t;	using u2=uint16_t;	using u4=uint32_t;	using u8=uint64_t;	using u16=unsigned __int128;
 using i1=int8_t;	using i2=int16_t;	using i4=int32_t;	using i8=int64_t;	using i16=__int128;
-										using f4=float;		using f8=double;	using f16=long double;
+										using f4=float32_t;	using f8=float64_t;	using f16=float128_t;
 using uf1=uint_fast8_t;	using uf2=uint_fast16_t;using uf4=uint_fast32_t;using uf8=uint_fast64_t;
 using if1=int_fast8_t;	using if2=int_fast16_t;	using if4=int_fast32_t;	using if8=int_fast64_t;
 
@@ -37,175 +38,105 @@ constexpr bool debug=true;
 #endif
 
 #ifdef ONLINE_JUDGE
-#define DEBUG_MACRO(x) 0
+#define DEBUG_MACRO(x)
 #define DEBUG_MACRO_ELSE(x) x
 #else
 #define DEBUG_MACRO(x) x
-#define DEBUG_MACRO_ELSE(x) 0
+#define DEBUG_MACRO_ELSE(x)
 #endif
 
 #define DEBUG if constexpr(debug)
-#define DEBUG_BLOCK(x) if constexpr(debug){x}
-
-template<class T, bool (*Cmp)(const T&, const T&)>
-struct cmp{
-	constexpr bool operator()(const T& a, const T& b) const{
-		return Cmp(a, b);
-	}
-};
-
-template<class T>
-requires std::is_trivially_copyable_v<T>
-class Hash{
-	constexpr static hash<string_view> h{};
-public:
-	size_t operator()(const T& t){
-		auto bytes = std::as_bytes(std::span<const T,1>(&t, 1));
-		return h(string_view(
-			reinterpret_cast<const char*>(bytes.data()),
-			bytes.size_bytes()
-		));
-	}
-};
-
-template<
-	class T,
-	class Cmp
->
-class PQ{
-private:
-	struct S;
-	using umap = unordered_map<T, S, Hash<T>>;
-	using vec = vector<typename umap::iterator>;
-
-	struct S{
-		size_t n;
-		vec::iterator it;
-	};
-
-	umap data;
-	vec heap;
-	size_t size;
-
-public:
-	PQ() : size(0){}
-
-	void push
-};
 
 int main(){
-	ios::sync_with_stdio(false);
-	cin.tie(0);
-
-	array<
-		priority_queue<uf4>,
-		100'001
-	> a;
-	array<if8, 100'001> res{0,};
-	priority_queue<
-		pair<uf4, uf4>,
-		vector<pair<uf4, uf4>>,
-		cmp<pair<uf4, uf4>, [](const pair<uf4, uf4> &a, const pair<uf4, uf4> &b){
-			return (a.second > b.second);
-		}>
-	> pq;
-
-	priority_queue<
-		pair<uf4, uf4>,
-		vector<pair<uf4, uf4>>,
-		cmp<pair<uf4, uf4>, [](const pair<uf4, uf4> &a, const pair<uf4, uf4> &b){
-			return (a.second < b.second);
-		}>
-	> cpq;
+	cin.tie(0)->sync_with_stdio(false);
 
 	uf4 n, k;
 	cin>>n>>k;
 
-	{
-		array<uf4, 100'001> v;
-		for(uf4 i=n; i--;)
-			cin>>v[i];
+	priority_queue<pair<uf4, uf4>, vector<pair<uf4, uf4>>, greater<pair<uf4, uf4>>> dpq;
+	array<priority_queue<uf4, vector<uf4>, greater<uf4>>, 100'000> dpqs;
 
+	{
+		array<uf4, 100'000> a;
+		for(uf4 i=n; i--;) cin>>a[i];
 		for(uf4 i=n; i--;){
 			uf4 x;
 			cin>>x;
-			pq.emplace(v[i]-1, x);
+			dpqs[a[i]-1].emplace(x);
 		}
 	}
 
-	for(uf4 i=k; i; pq.pop()){
-		if(pq.empty()){
-			res[n-1] = -1;
-			break;
-		}
-
-		const auto& vpq = pq.top();
-		if(n <= a[vpq.first].size()) continue;
-
-		a[vpq.first].push(vpq.second);
-		res[n-1] += vpq.second;
-		--i;
+	for(uf4 i=n; i--;){
+		if(dpqs[i].empty()) continue;
+		dpq.emplace(dpqs[i].top(), i);
 	}
 
-	for(uf4 i=n; i--; )
-		cpq.emplace(i, a[i].size()),
-		DEBUG_MACRO(cout<<i<<' '<<a[i].size()<<'\t'<<(a[i].size() ? a[i].top() : -1)<<'\n');
+	array<priority_queue<uf4>, 100'000> rpqs;
+	priority_queue<tuple<uf4, uf4, uf4>> szpq;
 
-	DEBUG cout<<cpq.top().first<<' '<<cpq.top().second<<'\n';
+	uf4 r = 0;
+	for(uf4 i=k; i--;){
+		auto top = dpq.top();
+		auto &[v, p] = top;
+		dpq.pop();
+		dpqs[p].pop();
 
-	for(uf4 l=n; --l; ){
-		if(res[l+1] == -1){
-			res[l] = -1;
-			continue;
-		}
+		r += v;
+		rpqs[p].emplace(v);
 
-		if8 diff = 0;
-		while(1){
-			const auto& vcpq = cpq.top();
-			if(vcpq.second <= l) break;
+		if(dpqs[p].size())
+			dpq.emplace(dpqs[p].top(), p);
+	}
 
-			if(pq.empty()){
-				res[l] = -1;
-				break;
+	cout<<r;
+	return 0;
+
+	for(uf4 i=n; i--;)
+		szpq.emplace(rpqs[i].size(), rpqs[i].top(), i);
+
+	uf4 outp = 0;
+	array<uf4, 100'000> out;
+	out[outp++] = r;
+
+	uf4 i;
+	for(i=n; --i;){
+		for(tuple<uf4, uf4, uf4> top; i < get<0>(top=szpq.top());){
+			// remove
+			auto &[sz, v, p] = top;
+			szpq.pop();
+
+			r -= v;
+			rpqs[p].pop();
+
+			if(auto sz = rpqs[p].size(); sz)
+				szpq.emplace(sz, rpqs[p].top(), p);
+
+			// add
+			while(true){
+				if(dpq.empty()) goto ret;
+
+				auto dtop = dpq.top();
+				auto &[dv, dp] = dtop;
+				dpq.pop();
+				dpqs[dp].pop();
+
+				if(i <= rpqs[dp].size()) continue;
+
+				r += dv;
+				rpqs[dp].emplace(dv);
+
+				if(dpqs[dp].size())
+					dpq.emplace(dpqs[dp].top(), dp);
+				szpq.emplace(rpqs[dp].size(), rpqs[dp].top(), dp);
 			}
-
-			const auto& vpq = pq.top();
-
-			diff += vpq.second - a[vcpq.first].top();
-			a[vcpq.first].pop();
-
-			cpq.emplace(vcpq.first, vcpq.second-1);
-			cpq.pop();
 		}
+		out[outp++] = r;
 	}
 
-/*
-	for(uf4 l=1; l<=n; ++l){
-		memset(a, 0, sizeof(a));
-		pq = _pq;
+ret:
+	while(i--) cout<<"-1 ";
+	while(outp--) cout<<out[outp]<<' ';
 
-		uf8 s=0;
-		bool f=true;
-		for(uf4 i=k; i; pq.pop()){
-			if(pq.empty()){
-				f=false;
-				cout<<"-1 ";
-				break;
-			}
-
-			const auto& vpq = pq.top();
-			if(l <= a[vpq.first]) continue;
-
-			s += vpq.second;
-			++a[vpq.first];
-
-			--i;
-		}
-
-		if(f)
-			cout<<s<<' ';
-	}
-*/
 	return 0;
 }
-
+//; echo """
