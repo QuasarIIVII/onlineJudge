@@ -2,7 +2,7 @@
 
 section .data align=16
 	s0 db "A",10,0
-	s1 db "?",10,0
+	s1 db "B",10,0
 	s2 db 32,0
 	s3 db 10,0
 	_s2 times 35 db 0x41, 0x42, 0x43
@@ -435,7 +435,7 @@ ql.io.os.write_cstr_p: ; 64 packed
 	ret
 
 ql.io.os.write_i8:
-	; rdi : i8 n
+	; rdi : u8 n
 
 	push rbp
 	mov rbp, rsp
@@ -571,154 +571,87 @@ ql.io.os.write_u8:
 	pop rbp
 	ret
 
-section .bss
-	as	resd 1_000_000
-	a	resd 1_000_001
-	ae:
-
 section .text
 
 main:
-	push qword 2
+	push qword 1502
 	call ql.proc.begin
 
-	mov rdi, 120000000
-	mov rsi, 120000000
+	mov rdi, 33011
+	mov rsi, 64
 	call ql.io
 	call ql.io.is.load
 
-.lb#a:
 	call ql.io.is.read_iu8_s
-	mov [rbp-4], eax
+	xor r12d, r12d
+	mov ebx, eax
+	mov [rbp + rax*8 - 24016], r12
+	mov r15d, eax
 
 	.l0s:
-		call ql.io.is.read_iu8_s ;a
-		vpinsrd xmm1, eax, 2
-		vpinsrw xmm3, eax, 0
-		call ql.io.is.read_iu8_s ;b
-		vpinsrd xmm1, eax, 3
-		mov r12d, eax
-		vpinsrw xmm3, eax, 1
-		call ql.io.is.read_iu8_s ;c
-		vpinsrd xmm2, eax, 1
-		vpinsrd xmm2, eax, 3
-		vpinsrw xmm3, eax, 2
-		call ql.io.is.read_iu8_s ;d
-		vpinsrd xmm1, eax, 0
-		vpinsrd xmm2, eax, 2
-		mov r13d, eax
-		vpinsrw xmm3, eax, 3
-		call ql.io.is.read_iu8_s ;e
-		vpinsrd xmm2, eax, 0
-		vpinsrw xmm3, eax, 4
-		call ql.io.is.read_iu8_s ;f
-		vpinsrd xmm1, eax, 1
-		mov r14d, eax
-		vpinsrw xmm3, eax, 5
-
-		vpmulld xmm0, xmm1, xmm2
-
-		vpextrd eax, xmm0, 0 ;de
-		vpextrd ebx, xmm0, 1 ;fc
-		vpextrd edi, xmm0, 2 ;ad
-		vpextrd esi, xmm0, 3 ;bc
-
-		cmp edi, esi
-		jz .l0m#1
-
-		sub eax, ebx ; de-fc
-		sub edi, esi ; ad-bc
-		cdq
-		idiv edi ; x `$eax` = (de-fc)/(ad-bc)
-
-		test edx, edx
-		mov r15d, eax
-		jnz .l0m#1
-
-		mul r12 ; `$rax` = bx
-
-		test r13d, r13d ; assert(d != 0)
-		jz .l0m#1
-
-		sub r14, rax ; f-bx
-		mov rax, r14
-		div r13 ; (f-bx)/d
-
-		test r15d, r15d ; assert(x <= 0)
-		jle .l0m#1
-
-		test edx, edx
-		jnz .l0m#1
-
-		test eax, eax
-		mov r14d, eax
-		jle .l0m#1
-
-		mov edi, r15d
-		call ql.io.os.write_u8_
-		lea rdi, [rel s2]
-		call ql.io.os.write_cstr
-
-		mov edi, r14d
-		call ql.io.os.write_u8_
-		lea rdi, [rel s3]
-		call ql.io.os.write_cstr
-	.l0m#0:
-		dec dword [rbp-4]
-		jnz .l0s
-	.l0m#1:
-		vpextrw eax, xmm3, 0 ; a
-		vpextrw ebx, xmm3, 1 ; b
-		vpextrw ecx, xmm3, 2 ; c
-		vpextrw edx, xmm3, 3 ; d
-		vpextrw esi, xmm3, 4 ; e
-		vpextrw edi, xmm3, 5 ; f
-
-		.l0.c0s:
-			test ax, ax
-			jnz .c0e
-
-			test bx, bx
-			jz .l0m#2
-		.l0.c0e:
-
-		.l0.c1s:
-			test cx, cx
-			jnz .c0e
-
-			test dx, dx
-			jz .l0m#2
-		.l0.c1e:
-
-		mov r8d, eax
-		mov r9d, ebx
-
-		.l0.l0s:
-			lea r10d, [r8d+ecx]
-			lea r11d, [r9d+edx]
-
-			mov r13d, 1
-
-			.l0.l0.l0s:
-				cmp r10d, esi
-				ja .l0.l0.l0e
-				jnz .l0.l0.l0m
-
-				cmp r11d, edi
-				ja .l0.l0.l0e
-				jnz .l0.l0.l0m
-			.l0.l0.l0m:
-			.l0.l0.l0e:
-		.l0.l0m:
-		.l0.l0e:
-
-	.l0m#2:
-		lea rdi, [rel s1]
-		call ql.io.os.write_cstr
-
-		dec dword [rbp-4]
+		call ql.io.is.read_iu8_s
+		add r12, rax
+		mov [rbp + rbx*8 - 8 - 24016], r12
+	.l0m:
+		dec bx
 		jnz .l0s
 	.l0e:
+
+	mov eax, r15d
+	xor r10d, r10d
+	shr eax, 1
+	not r10d
+
+	.l1s:
+		mov ebx, r15d
+		sub ebx, eax
+		.l1.l0s:
+			lea rdx, [rbp + rbx*8 - 24016]
+			mov rsi, [rdx]
+
+			mov ecx, ebx
+
+			sub rsi, [rdx + rax*8]
+
+			sub ecx, eax
+			jb .l1.l0e
+
+			.l1.l0.l0s:
+				lea rdx, [rbp + rcx*8 - 24016]
+				mov rdi, [rdx]
+				mov r8, rsi
+				sub rdi, [rdx + rax*8]
+				sub r8, rdi ; r8 = rsi - rdi
+				sub rdi, rsi ; rdi = rdi - rsi
+				cmovb rdi, r8
+
+				cmp rdi, r10
+				cmovb r10, rdi
+				cmovb r11w, ax
+
+				test cx, cx
+				lea cx, [ecx - 1]
+				jnz .l1.l0.l0s
+			.l1.l0.l0e:
+
+			dec bx
+			jnz .l1.l0s
+		.l1.l0e:
+	.l1m:
+		dec ax
+		jnz .l1s
+	.l1e:
+
+	mov rbx, r10
+
+	movzx edi, r11w
+	call ql.io.os.write_u8_
+
+	lea rdi, [rel s3]
+	call ql.io.os.write_cstr
+
+	mov rdi, rbx
+	call ql.io.os.write_u8_
 
 	call ql.io.os.flush
 
