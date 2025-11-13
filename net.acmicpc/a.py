@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
 import sys
 import re
 
 def process_line(line, label_map=None):
 	line = line.replace('"', '\\"')
 	line = line.replace('$', '__dollar__')
+	line = line.replace('[rel ', '[rip + ')
 	line = line.replace(' qword ', ' QWORD PTR ')
 	line = line.replace(' dword ', ' DWORD PTR ')
 	line = line.replace(' word ', ' WORD PTR ')
