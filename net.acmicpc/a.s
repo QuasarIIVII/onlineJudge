@@ -1,5 +1,5 @@
 .section .data
-	.p2align 16
+	.p2align 4
 s0:
 	.ascii "Hello World!"
 	.byte 10, 0
@@ -34,7 +34,7 @@ ql.io.data:
 	.equ ql.io.isLetter,		0b0000011111111111111111111111111000000111111111111111111111111110
 
 .section .data
-	.p2align 32
+	.p2align 4
 	;	           	 $       F       E       D       C       B       A       9       8
 	ql.io.isNum:
 		.quad		0b0000001111111111000000000000000000000000000000000000000000000000,
