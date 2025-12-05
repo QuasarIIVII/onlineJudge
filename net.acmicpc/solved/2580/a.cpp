@@ -49,6 +49,73 @@ constexpr bool debug=true;
 
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
+
+	struct S{
+		u2 d: 9;
+		u1 n: 4;
+	};
+
+	using A = array<array<S, 9>, 9>;
+	A a;
+
+	uf1 pb = 0;
+	array<pair<uf1, uf1>, 81> b;
+
+	{
+		array<uf2, 9> r{0, }, c{0, }, blk{0, };
+		for(uf1 i=9; i--;)for(uf1 j=9; j--;){
+			uf2 x;
+			cin>>x;
+			a[i][j].n=x;
+
+			if(x){
+				uf2 m = 1u << (x-1);
+				r[i] |= m, c[j] |= m;
+				blk[(i/3)*3 + j/3] |= m;
+			}
+		}
+
+		for(uf1 i=9; i--;)for(uf1 j=9; j--;){
+			if(a[i][j].n) continue;
+			uf2 m = ~(r[i] | c[j] | blk[(i/3)*3 + j/3]) & 0x1FF;
+			a[i][j].d = m;
+			b[pb++] = {i, j};
+		}
+	}
+
+	A r = {0, };
+
+	function<bool(const uf1, const A& a)> f = [&](const uf1 c, const A& a){
+		if(c == pb) return r = a, true;
+
+		auto [p, q] = b[c];
+		uf2 m = a[p][q].d;
+		for(uf1 i=1, k; (i+=(k=countr_zero(m))) < 10; m>>=1, ++i){
+			m >>= k;
+
+			A aa = a;
+			aa[p][q].n = i;
+			uf2 mm = ~(1u << (i-1));
+
+			for(uf1 j=0; j<9; ++j){
+				if(aa[p][j].n == 0) aa[p][j].d &= mm;
+				if(aa[j][q].n == 0) aa[j][q].d &= mm;
+				uf1 bi = (p/3)*3 + j/3, bj = (q/3)*3 + j%3;
+				if(aa[bi][bj].n == 0) aa[bi][bj].d &= mm;
+			}
+
+			if(f(c+1, aa)) return true;
+		}
+
+		return false;
+	};
+
+	f(0, a);
+
+	for(uf1 i=9; i--;)
+		for(uf1 j=9; j-- || (cout<<'\n', 0);)
+			cout<<u2(r[i][j].n)<<' ';
+
 	return 0;
 }
 AFESDJPOI

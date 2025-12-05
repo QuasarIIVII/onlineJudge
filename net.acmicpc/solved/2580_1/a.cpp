@@ -1,4 +1,3 @@
-//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -21,7 +20,8 @@
 #include<stdfloat>
 #include<cmath>
 #include<cstring>
-//; echo """
+#define AFESDJPOI asm("nop")
+//$(pwd); cat <<AFESDJPOI
 
 using namespace std;
 
@@ -58,11 +58,11 @@ int main(){
 	using A = array<array<S, 9>, 9>;
 	A a;
 
-	using T = tuple<u1, u1, u1>;
-	priority_queue<T, vector<T>, greater<T>> q;
+	using T = tuple<uf1, uf1, uf1>;
+	priority_queue<T, vector<T>, greater<>> q;
 
 	{
-		array<uf2, 9> r{0, }, c{0, }, b{0, };
+		array<uf2, 9> r{0, }, c{0, }, blk{0, };
 		for(uf1 i=9; i--;)for(uf1 j=9; j--;){
 			uf2 x;
 			cin>>x;
@@ -71,29 +71,27 @@ int main(){
 			if(x){
 				uf2 m = 1u << (x-1);
 				r[i] |= m, c[j] |= m;
-				b[(i/3)*3 + j/3] |= m;
+				blk[(i/3)*3 + j/3] |= m;
 			}
 		}
 
 		for(uf1 i=9; i--;)for(uf1 j=9; j--;){
 			if(a[i][j].n) continue;
-			uf2 m = ~(r[i] | c[j] | b[(i/3)*3 + j/3]) & 0x1FF;
+			uf2 m = ~(r[i] | c[j] | blk[(i/3)*3 + j/3]) & 0x1FF;
 			a[i][j].d = m;
 			q.emplace(popcount(m), i, j);
-			DEBUG cout<<"init ("<<u2(i)<<", "<<u2(j)<<") to "<<u2(popcount(m))<<'\n';
 		}
 	}
 
 	A r = {0, };
 
-	function<bool(const A&)> f = [&q, &f, &r](const A &a){
-		u1 c, x, y;
-		c=x=y=0xff;
+	function<bool(const A& a)> f = [&](const A& a){
+		uf1 c, x, y;
+		c = x = y = 0xff;
 		while(q.size()){
 			tie(c, x, y) = q.top();
 			q.pop();
-			DEBUG cout<<"pop ("<<u2(x)<<", "<<u2(y)<<") with count "<<u2(c)<<'\n';
-			if(!a[x][y].n) goto lb0;
+			if(!a[x][y].n && popcount(a[x][y].d) == c) goto lb0;
 		}
 
 		if(q.empty()){
@@ -103,58 +101,43 @@ int main(){
 
 	lb0:
 		uf2 m = a[x][y].d;
-		cout<<"at ("<<u2(x)<<", "<<u2(y)<<") try options "<<bitset<9>(m)<<'\n';
-		for(uf1 i=1; i<10; ++i, m>>=1){
-			if(!(m&1)) continue;
+		for(uf1 i=1, k; (i+=(k=countr_zero(m))) < 10; m>>=1, ++i){
+			m >>= k;
+
 			A aa = a;
 			aa[x][y].n = i;
-
-			DEBUG cout<<"try "<<u2(i)<<" at ("<<u2(x)<<", "<<u2(y)<<")\n";
-			DEBUG for(uf1 ii=9; ii-- || (cout<<'\n', 0);)
-				for(uf1 jj=9; jj-- || (cout<<'\n', 0);)
-					cout<<u2(aa[ii][jj].n)<<' ';
-
 			uf2 mm = ~(1u << (i-1));
-			for(uf1 j=9; j--;){
-				if(!aa[x][j].n){
+
+			for(uf1 j=0; j<9; ++j){
+				if(aa[x][j].n == 0){
 					uf2 old = aa[x][j].d;
 					aa[x][j].d &= mm;
-					if(old != aa[x][j].d){
+					if(aa[x][j].d != old)
 						q.emplace(popcount(aa[x][j].d), x, j);
-						DEBUG cout<<"update ("<<u2(x)<<", "<<u2(j)<<") to "<<u2(aa[x][j].d)<<'\n';
-					}
 				}
-				if(!aa[j][y].n){
+				if(aa[j][y].n == 0){
 					uf2 old = aa[j][y].d;
 					aa[j][y].d &= mm;
-					if(old != aa[j][y].d){
+					if(aa[j][y].d != old)
 						q.emplace(popcount(aa[j][y].d), j, y);
-						DEBUG cout<<"update ("<<u2(j)<<", "<<u2(y)<<") to "<<u2(aa[j][y].d)<<'\n';
-					}
 				}
-				uf1 bx = (x/3)*3 + j/3, by = (j%3)*3 + y/3;
-				if(!aa[bx][by].n){
-					uf2 old = aa[bx][by].d;
-					aa[bx][by].d &= mm;
-					if(old != aa[bx][by].d){
-						q.emplace(popcount(aa[bx][by].d), bx, by);
-						DEBUG cout<<"update ("<<u2(bx)<<", "<<u2(by)<<") to "<<u2(aa[bx][by].d)<<'\n';
-					}
+				uf1 bi = (x/3)*3 + j/3, bj = (y/3)*3 + j%3;
+				if(aa[bi][bj].n == 0){
+					uf2 old = aa[bi][bj].d;
+					aa[bi][bj].d &= mm;
+					if(aa[bi][bj].d != old)
+						q.emplace(popcount(aa[bi][bj].d), bi, bj);
 				}
 			}
-
-			DEBUG for(uf1 ii=9; ii-- || (cout<<'\n', 0);)
-				for(uf1 jj=9; jj-- || (cout<<'\n', 0);)
-					cout<<u2(aa[ii][jj].n)<<' ';
 
 			if(f(aa)) return true;
 		}
 
-		cout<<"false at ("<<u2(x)<<", "<<u2(y)<<")\n";
+		q.emplace(c, x, y);
 		return false;
 	};
 
-	while(!f(a)) cout<<"======== retry ========\n";
+	f(a);
 
 	for(uf1 i=9; i--;)
 		for(uf1 j=9; j-- || (cout<<'\n', 0);)
@@ -162,7 +145,6 @@ int main(){
 
 	return 0;
 }
-//; echo """
-
-
+AFESDJPOI
+;
 

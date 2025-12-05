@@ -1,3 +1,4 @@
+//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -20,8 +21,7 @@
 #include<stdfloat>
 #include<cmath>
 #include<cstring>
-#define AFESDJPOI asm("nop")
-//$(pwd); cat <<AFESDJPOI
+//; echo """
 
 using namespace std;
 
@@ -49,7 +49,28 @@ constexpr bool debug=true;
 
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
+
+	uf2 n;
+	cin>>n;
+
+	array<uf8, 26> b{0, };
+
+	for(uf2 i=n; i--;){
+		string s;
+		cin>>s;
+
+		uf8 x = 1;
+		for(uf2 j = s.size(); j--; x*=10)
+			b[s[j]-0x41] += x;
+	}
+
+	sort(b.begin(), b.end(), greater<>());
+
+	uf8 r = 0;
+	for(uf4 i=10; i--;)
+		r += b[9-i] * i;
+
+	cout<<r;
 	return 0;
 }
-AFESDJPOI
-;
+//; echo """

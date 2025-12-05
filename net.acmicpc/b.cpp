@@ -1,4 +1,3 @@
-//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -21,7 +20,8 @@
 #include<stdfloat>
 #include<cmath>
 #include<cstring>
-//; echo """
+#define AFESDJPOI asm("nop")
+//$(pwd); cat <<AFESDJPOI
 
 asm(
 ".intel_syntax noprefix\n\t"
@@ -512,4 +512,5 @@ int main(){
 	qio_close();
 	return 0;
 }
-//; echo """
+AFESDJPOI
+;
