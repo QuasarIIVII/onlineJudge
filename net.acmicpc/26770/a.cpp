@@ -49,6 +49,23 @@ constexpr bool debug=true;
 
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
+
+	uf4 n;
+	cin>>n;
+
+	uf4 p = 0, c = 0;
+	bool d = true;
+	while(n--){
+		uf4 x;
+		cin>>x;
+		if(p == x) continue;
+		if(d ^ (x < p)){
+			++c;
+			d = !d;
+		}
+		p = x;
+	}
+	cout<<c;
 	return 0;
 }
 AFESDJPOI

@@ -508,6 +508,22 @@ int main(){
 	qio_init();
 	qio_is_load();
 
+	u8 n;
+	qio_is_read_iu8(n);
+	uf4 p = 0, c = 0;
+	bool d = true;
+	while(n--){
+		u8 x;
+		qio_is_read_iu8(x);
+		if(p == x) continue;
+		if(d ^ (x < p)){
+			++c;
+			d = !d;
+		}
+		p = x;
+	}
+	qio_os_write_u8(c);
+
 	qio_flush();
 	qio_close();
 	return 0;
