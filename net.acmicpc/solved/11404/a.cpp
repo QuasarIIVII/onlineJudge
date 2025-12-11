@@ -352,18 +352,14 @@ asm(
 "nop\n\t"
 );
 
-inline void qio_init(
-	size_t buf_sz_in=1000000,
-	size_t buf_sz_out=1000000
-){
+inline void qio_init(){
 	asm(
 	".intel_syntax noprefix\n\t"
-	"	mov rdi, %0\n\t"
-	"	mov rsi, %1\n\t"
+	"	mov rdi, 2_100_064\n\t"
+	"	mov rsi, 130_000\n\t"
 	"	call ql.io\n\t"
 	".att_syntax prefix\n\t"
-	:: "r"(buf_sz_in), "r"(buf_sz_out)
-	: "rdi", "rsi"
+	::: "rdi", "rsi"
 	);
 }
 
@@ -507,10 +503,10 @@ public:
 };
 
 template<class T>
-T qio_is_read_iu8(){
-	u8 ret;
-	qio_is_read_iu8(ret);
-	return static_cast<T>(ret);
+T I(){
+	u8 r;
+	qio_is_read_iu8(r);
+	return static_cast<T>(r);
 }
 
 int main(){
@@ -518,6 +514,43 @@ int main(){
 
 	qio_init();
 	qio_is_load();
+
+	const uf1 n = I<uf1>();
+	const uf2 m = I<uf2>();
+	auto a = [] consteval {
+		array<array<u8, 100>, 100> a;
+		decltype(a)::value_type aa;
+		aa.fill(numeric_limits<u8>::max()/2);
+		a.fill(aa);
+		for(uf1 i=100; i--;) a[i][i] = 0;
+		return a;
+	}();
+
+	for(uf2 i=m; i--;){
+		const uf1 u = I<uf1>(), v = I<uf1>();
+		const uf4 w = I<uf4>();
+		a[u-1][v-1] = min(a[u-1][v-1], static_cast<u8>(w));
+	}
+
+	for(uf1 k=n; k--;){
+		for(uf1 i=n; i--;){
+			for(uf1 j=n; j--;){
+				a[i][j] = min(a[i][j], a[i][k]+a[k][j]);
+			}
+		}
+	}
+
+	for(uf1 i=0; i<n; ++i){
+		for(uf1 j=0; j<n; ++j){
+			if(a[i][j]==numeric_limits<u8>::max()/2)
+				qio_os_write_cstr("0 ");
+			else{
+				qio_os_write_u8(a[i][j]);
+				qio_os_write_cstr(" ");
+			}
+		}
+		qio_os_write_cstr("\n");
+	}
 
 	qio_flush();
 	qio_close();
