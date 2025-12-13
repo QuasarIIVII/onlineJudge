@@ -1,4 +1,3 @@
-//; echo """
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -21,7 +20,8 @@
 #include<stdfloat>
 #include<cmath>
 #include<cstring>
-//; echo """
+#define AFESDJPOI asm("")
+//$(pwd); cat <<AFESDJPOI
 
 using namespace std;
 
@@ -38,11 +38,11 @@ constexpr bool debug=true;
 #endif
 
 #ifdef ONLINE_JUDGE
-#define DEBUG_MACRO(x)
+#define DEBUG_MACRO(x) 0
 #define DEBUG_MACRO_ELSE(x) x
 #else
 #define DEBUG_MACRO(x) x
-#define DEBUG_MACRO_ELSE(x)
+#define DEBUG_MACRO_ELSE(x) 0
 #endif
 
 #define DEBUG if constexpr(debug)
@@ -53,8 +53,8 @@ int main(){
 	uf4 n, k;
 	cin>>n>>k;
 
-	priority_queue<pair<uf4, uf4>, vector<pair<uf4, uf4>>, greater<pair<uf4, uf4>>> dpq;
-	array<priority_queue<uf4, vector<uf4>, greater<uf4>>, 100'000> dpqs;
+	priority_queue<pair<uf4, uf4>, vector<pair<uf4, uf4>>, greater<>> dpq;
+	array<priority_queue<uf4, vector<uf4>, greater<>>, 100'000> dpqs;
 
 	{
 		array<uf4, 100'000> a;
@@ -72,71 +72,89 @@ int main(){
 	}
 
 	array<priority_queue<uf4>, 100'000> rpqs;
-	priority_queue<tuple<uf4, uf4, uf4>> szpq;
 
-	uf4 r = 0;
+	DEBUG cout<<"max limit"<<endl;
+	uf8 r = 0;
 	for(uf4 i=k; i--;){
-		auto top = dpq.top();
-		auto &[v, p] = top;
+		auto [v, p] = dpq.top();
 		dpq.pop();
 		dpqs[p].pop();
 
 		r += v;
 		rpqs[p].emplace(v);
+		DEBUG cout<<p<<' '<<v<<' '<<r<<'\n';
 
 		if(dpqs[p].size())
 			dpq.emplace(dpqs[p].top(), p);
 	}
 
-	cout<<r;
-	return 0;
+	array<uf4, 100'000> sza;
+	set<pair<uf4, uf4>> szs;
 
-	for(uf4 i=n; i--;)
-		szpq.emplace(rpqs[i].size(), rpqs[i].top(), i);
+	DEBUG cout<<"init szs"<<endl;
+	for(uf4 i=n; i--;){
+		if(sza[i] = rpqs[i].size())
+			DEBUG_MACRO(cout<<i<<' '<<sza[i]<<'\n'),
+			szs.emplace(sza[i], i);
+	}
 
-	uf4 outp = 0;
-	array<uf4, 100'000> out;
-	out[outp++] = r;
+	uf4 sp = 0;
+	array<uf8, 100'000> st;
+	st[sp++] = r;
 
 	uf4 i;
 	for(i=n; --i;){
-		for(tuple<uf4, uf4, uf4> top; i < get<0>(top=szpq.top());){
-			// remove
-			auto &[sz, v, p] = top;
-			szpq.pop();
+		uf4 c = 0;
+		DEBUG cout<<"step "<<i<<' '<<r<<'\n';
+		for(decltype(szs.end()) it; szs.size() && i < (it=prev(szs.end()))->first; ++c){
+			auto [v, p] = *it;
+			szs.erase(it);
+			DEBUG cout<<"remove "<<p<<' '<<v<<' '<<rpqs[p].top()<<'\n';
 
-			r -= v;
+			r -= rpqs[p].top();
 			rpqs[p].pop();
 
-			if(auto sz = rpqs[p].size(); sz)
-				szpq.emplace(sz, rpqs[p].top(), p);
-
-			// add
-			while(true){
-				if(dpq.empty()) goto ret;
-
-				auto dtop = dpq.top();
-				auto &[dv, dp] = dtop;
-				dpq.pop();
-				dpqs[dp].pop();
-
-				if(i <= rpqs[dp].size()) continue;
-
-				r += dv;
-				rpqs[dp].emplace(dv);
-
-				if(dpqs[dp].size())
-					dpq.emplace(dpqs[dp].top(), dp);
-				szpq.emplace(rpqs[dp].size(), rpqs[dp].top(), dp);
-			}
+			if(v = rpqs[p].size())
+				szs.emplace(v, p);
+			sza[p] = v;
 		}
-		out[outp++] = r;
-	}
 
+		while(c){
+			if(dpq.empty()) goto ret;
+
+			auto [v, p] = dpq.top();
+			dpq.pop();
+			dpqs[p].pop();
+
+			DEBUG cout<<"try add "<<p<<' '<<v<<'\n';
+
+			if(i <= sza[p]){
+				if(dpq.size()) continue;
+				else goto ret;
+			}
+
+			DEBUG cout<<": accept"<<'\n';
+
+			r += v;
+			rpqs[p].emplace(v);
+
+			if(dpqs[p].size())
+				dpq.emplace(dpqs[p].top(), p);
+
+			if(sza[p]) szs.erase({sza[p], p});
+			if(++sza[p]) szs.emplace(sza[p], p);
+			--c;
+		}
+
+		st[sp++] = r;
+		DEBUG cout<<endl;
+	}
 ret:
+	DEBUG cout<<"ret\n"<<i<<' '<<sp<<'\n';
 	while(i--) cout<<"-1 ";
-	while(outp--) cout<<out[outp]<<' ';
+	while(sp--) cout<<st[sp]<<' ';
 
 	return 0;
 }
-//; echo """
+AFESDJPOI
+;
