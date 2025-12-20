@@ -516,7 +516,7 @@ T qio_is_read_iu8(){
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	qio_init();
+	qio_init(2'000'064, 64);
 	qio_is_load();
 
 	uf2 n=qio_is_read_iu8<uf2>();
