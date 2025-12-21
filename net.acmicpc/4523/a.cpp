@@ -85,7 +85,7 @@ using TK = variant<uf1, if1, double>;
 uf1 tkz(
 	string_view sv,
 	array<TK, 80> &tks,
-	priority_queue<pair<uf1, uf1>> &ops
+	array<pair<uf1, uf1>, 80> &ops
 ){
 	uf1 p = 0;
 	tks[p++] = uf1(0);
@@ -193,3 +193,5 @@ int main(){
 }
 AFESDJPOI
 ;
+
+

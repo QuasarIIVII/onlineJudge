@@ -50,50 +50,17 @@ constexpr bool debug=true;
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	const auto a = []{
-		array<uf8, 20> a{};
-		array<array<uf8, 2>, a.size()> aa;
-		aa.fill({numeric_limits<uf8>::max(), numeric_limits<uf8>::max()});
-		aa[0][0] = aa[0][1] = 0;
-		aa[1][0] = 1, aa[1][1] = 0;
-
-		function<uf8(uf4 b, uf1)> f = [&aa, &f](uf4 b, uf1 d){
-			uf8 &r = aa[d][b>>d & 1];
-
-			if(r+1) return r;
-
-			r = 0;
-			for(uf1 i=aa.size(); i--;){
-				if(i == d) continue;
-				if(b>>i & 1) continue;
-				r += f(b | 1u<<i, d-1);
-			}
-
-			DEBUG cout<<"f("<<bitset<20>(b)<<", "<<(uf4)d<<") = "<<r<<'\n';
-			return r;
-		};
-
-		f(0, aa.size()-1);
-
-		for(uf1 i=a.size(); i--;){
-			uf8 x = aa[i][0]+1 ? aa[i][0] : 0;
-			uf8 y = aa[i][1]+1 ? aa[i][1] : 0;
-			a[i] = x + y;
+	uf4 n;
+	cin>>n;
+	while(n--){
+		string s;
+		uf4 d;
+		cin>>s>>d;
+		if(d == 2026){
+			cout<<s;
+			break;
 		}
-		return a;
-	}();
-
-	DEBUG for(uf4 i=0; i<a.size(); ++i)
-		cout<<i<<" = "<<a[i]<<'\n';
-
-	uf4 T;
-	cin>>T;
-	while(T--){
-		uf4 n;
-		cin>>n;
-		cout<<a[n-1]<<'\n';
 	}
-
 	return 0;
 }
 AFESDJPOI
