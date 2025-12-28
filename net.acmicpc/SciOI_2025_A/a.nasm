@@ -3,7 +3,7 @@
 section .data align=16
 	s0 db "A",10,0
 	s1 db "B",10,0
-	s2 db 32,10,0
+	s2 db "SSH", 0
 	s3 db 10,0
 	_s2 times 35 db 0x41, 0x42, 0x43
 
@@ -40,6 +40,8 @@ section .bss align=16
 
 section .text
 	global main
+	extern scanf, printf, fgets, fputs, stdin, stdout
+	extern sscanf, sprintf
 
 ql.proc.begin:
 	; usuage
@@ -569,49 +571,45 @@ ql.io.os.write_u8:
 	pop rbp
 	ret
 
+section .bss
+	as	resd 1_000_000
+	a	resd 1_000_001
+	ae:
+
 section .text
 
 main:
 	push qword 2
 	call ql.proc.begin
 
-	mov rdi, 120000000
-	mov rsi, 120000000
+	mov rdi, 64
+	mov rsi, 5_000_064
 	call ql.io
 	call ql.io.is.load
 
-.lb#a:
-	call ql.io.is.read_iu8_s
+	call ql.io.is.read_iu8_ns
+	mov ebx, 3
+	xor edx, edx
+
+	div ebx
 	mov ebx, eax
+	mov r12d, edx
+
+	test ebx, ebx
+	lea rdi, [rel s2]
+	jmp .l0m
 
 	.l0s:
-		call ql.io.is.read_iu8_s
-		inc dword [a+rax*4]
-	.l0m:
+		call ql.io.os.write_cstr
 		dec ebx
+		lea rdi, [rel s2]
+	.l0m:
 		jnz .l0s
 	.l0e:
 
-	mov rbx, -1_000_000
-	.l1s:
-		mov r12d, [a+rbx*4]
-		test r12d, r12d
-		jz .l1m
-
-		.l1.l1s:
-			movsx rdi, ebx
-			call ql.io.os.write_i8
-			lea rdi, [rel s3]
-			call ql.io.os.write_cstr
-		.l1.l1m:
-			dec r12d
-			jnz .l1.l1s
-		.l1.l1e:
-	.l1m:
-		inc rbx
-		cmp ebx, 1_000_001
-		jnz .l1s
-	.l1e:
+	lea rdi, [rel s2]
+	mov byte [r12 + s2], 0
+	call ql.io.os.write_cstr
 
 	call ql.io.os.flush
 

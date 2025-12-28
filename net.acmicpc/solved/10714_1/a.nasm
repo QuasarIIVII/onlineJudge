@@ -1,9 +1,9 @@
 ;indent setting : \t (0x09) which has width of 4 spaces (0x20)
 
 section .data align=16
-	s0 db "A",10,0
-	s1 db "B",10,0
-	s2 db 32,10,0
+	s0 db "A",32,0
+	s1 db "B",32,0
+	s2 db 32,0
 	s3 db 10,0
 	_s2 times 35 db 0x41, 0x42, 0x43
 
@@ -569,10 +569,15 @@ ql.io.os.write_u8:
 	pop rbp
 	ret
 
+main.jt dq main.s1, main.s2
+
 section .text
 
 main:
-	push qword 2
+	.st.sz equ 2048*4 + 2048*2048*8 + 4
+	.st.d equ 2048*4 + 4
+
+	push qword (.st.sz-1 >> 4)+1
 	call ql.proc.begin
 
 	mov rdi, 120000000
@@ -580,38 +585,93 @@ main:
 	call ql.io
 	call ql.io.is.load
 
-.lb#a:
+	vpxor ymm0, ymm0
+	lea rbx, [rbp - .st.sz]
+	lea rdx, [rbp - .st.d]
+	.l2s:
+		vmovdqu [rbx+0x00], ymm0
+		vmovdqu [rbx+0x20], ymm0
+		vmovdqu [rbx+0x40], ymm0
+		vmovdqu [rbx+0x60], ymm0
+		vmovdqu [rbx+0x80], ymm0
+		vmovdqu [rbx+0xa0], ymm0
+		vmovdqu [rbx+0xc0], ymm0
+		vmovdqu [rbx+0xe0], ymm0
+		add rbx, 32*8
+		cmp rbx, rdx
+		jnz .l2s
+	.l2e:
+
 	call ql.io.is.read_iu8_s
 	mov ebx, eax
+	mov [rbp - 4], eax
 
 	.l0s:
 		call ql.io.is.read_iu8_s
-		inc dword [a+rax*4]
-	.l0m:
+		mov [rbp + rbx*4 -4 - .st.d], eax
 		dec ebx
 		jnz .l0s
 	.l0e:
 
-	mov rbx, -1_000_000
-	.l1s:
-		mov r12d, [a+rbx*4]
-		test r12d, r12d
-		jz .l1m
+	cmp dword [rbp - 4], 3
+	mov eax, [rbp - 4]
+	jae .s0
+	jmp [main.jt + rax*8 - 8]
 
-		.l1.l1s:
-			movsx rdi, ebx
-			call ql.io.os.write_i8
-			lea rdi, [rel s3]
-			call ql.io.os.write_cstr
-		.l1.l1m:
-			dec r12d
-			jnz .l1.l1s
-		.l1.l1e:
-	.l1m:
-		inc rbx
-		cmp ebx, 1_000_001
+.s1:
+	mov edi, [rbp - .st.d]
+	call ql.io.os.write_u8_
+	call ql.io.os.flush
+	xor eax,eax
+	call ql.proc.end
+	ret
+.s2:
+	mov edi, [rbp - .st.d]
+	mov esi, [rbp - .st.d + 4]
+	cmp edi, esi
+	cmovb edi, esi
+	call ql.io.os.write_u8_
+	call ql.io.os.flush
+	xor eax,eax
+	call ql.proc.end
+	ret
+
+.s0:
+	mov r12d, dword [rbp - 4] ; 0 (-1 + 1)
+	xor r13d, r13d ; 0
+	mov r14d, 1 ; 1
+	mov rbx, rbp
+	mov ebp, dword [rbp - 4]
+	xor r15d, r15d
+
+	.l1s:
+		mov edi, r14d
+		lea esi, [r12d - 1]
+
+		call g
+		mov ecx, [rbx + r13*4 - .st.d]
+
+		lea edx, [r14d + ebp - 1]
+		dec r14d
+		cmovl r14d, edx
+
+		add rax, rcx
+
+		lea edx, [r13d + ebp - 1]
+		dec r13d
+		cmovl r13d, edx
+
+		cmp rax, r15
+		cmova r15, rax
+
+		dec r12d
 		jnz .l1s
 	.l1e:
+
+	mov rbp, rbx
+
+	mov rdi, r15
+	call ql.io.os.write_u8_
 
 	call ql.io.os.flush
 
@@ -620,4 +680,124 @@ main:
 	xor eax,eax
 
 	call ql.proc.end
+	ret
+
+; rbx : base
+; edi : l
+; esi : r
+f:
+	.st.sz equ 12
+
+	mov eax, edi ; eax = l
+	shl rax, 11+3 ; rax = l*2048 * 8
+	lea rcx, [rax + rsi*8] ; rcx = 8 * (l*2048 + r)
+	xor edx, edx
+	cmp [rbx + rcx - main.st.sz], rdx
+	cmovnz rax, [rbx + rcx - main.st.sz]
+	jnz .ret
+
+	cmp edi, esi
+	cmovz eax, [rbx + rsi*4 - main.st.d]
+	mov [rbx + rcx - main.st.sz], rax
+
+	cmp edi, esi
+	jz .ret
+
+	sub rsp, .st.sz
+
+	mov [rsp], di ; push di = l
+	mov eax, [rbx - 4] ; n
+	inc di ; di = l + 1
+	mov [rsp+2], si ; push si = r
+	mov ecx, edi ; l+1
+	lea edx, [esi - 1] ; r - 1
+	lea esi, [esi + eax - 1] ; r + n - 1
+	sub edi, eax ; l - n + 1
+
+	cmp esi, eax
+	cmovae esi, edx ; rr
+	cmp ecx, eax
+	mov [rsp+4], esi ; push esi = rr
+	cmovb edi, ecx ; ll
+
+	movzx esi, word [rsp+2]
+	call g
+
+	movzx edi, word [rsp]
+	mov esi, [rsp+4]
+	mov [rsp + 4], rax
+
+	call g
+
+	mov rcx, [rsp + 4] ; rcx = g(ll, r)
+	movzx edi, word [rsp]
+	movzx esi, word [rsp+2]
+	mov edx, [rbx + rdi*4 - main.st.d]
+	add rcx, rdx ; rcx = g(ll, r) + a[l]
+	mov edx, [rbx + rsi*4 - main.st.d]
+	add rax, rdx ; rax = g(l, rr) + a[r]
+
+	shl rdi, 11+3; rdi = l*2048 * 8
+
+	cmp rcx, rax
+	lea rdi, [rdi + rsi*8] ; rdi = 8 * (l*2048 + r)
+	cmova rax, rcx ; rax = max(rax, rcx)
+	add rsp, .st.sz
+	mov [rbx + rdi - main.st.sz], rax ; a[l][r] = rax
+.ret:
+	ret
+
+; rbx : base
+; edi : l
+; esi : r
+g:
+	.st.sz equ 4
+
+	mov eax, edi ; eax = l
+	shl rax, 11+3 ; rax = l*2048 * 8
+	lea rax, [rax + rsi*8] ; rax = 8 * (l*2048 + r)
+	xor edx, edx
+	cmp [rbx + rax - main.st.sz], rdx ; if a[l][r] != 0
+	cmovnz rax, [rbx + rax - main.st.sz] ; then ret = a[l][r]
+	jnz .ret ; then return
+
+	cmp edi, esi
+	cmovz eax, edx
+	mov [rbx + rax - main.st.sz], rdx
+	jz .ret
+
+	sub rsp, .st.sz
+
+	mov ecx, [rbx + rdi*4 - main.st.d] ; ecx = a[l]
+	mov edx, [rbx + rsi*4 - main.st.d] ; edx = a[r]
+	mov [rsp], di ; push di = l
+	mov [rsp+2], si ; push si = r
+
+	cmp ecx, edx
+	jae .c0m
+
+	.c0s:
+		mov eax, [rbx - 4] ; eax = n
+		lea eax, [esi + eax - 1] ; edx = r + n - 1
+		dec esi ; esi = r - 1
+		cmovl esi, eax ; esi = r < 1 ? r + n - 1 : r - 1
+		call f
+		jmp .c0e
+	.c0m:
+		mov eax, [rbx - 4] ; eax = n
+		lea edx, [edi + 1] ; edx = l + 1
+		inc edi ; edi = l + 1
+		sub edi, eax ; edx = l - n + 1
+		cmovb edi, edx ; edi = l+1 < n ? l + 1 : l - n + 1
+		call f
+	.c0e:
+
+	movzx edi, word [rsp]
+	movzx esi, word [rsp+2]
+	shl rdi, 11+3; rdi = l*2048 * 8
+	lea rdi, [rdi + rsi*8] ; rdi = 8 * (l*2048 + r)
+	mov [rbx + rdi - main.st.sz], rax ; a[l][r] = rax
+	add rsp, .st.sz
+
+.ret:
 	ret
