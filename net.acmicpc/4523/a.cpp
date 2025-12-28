@@ -47,6 +47,9 @@ constexpr bool debug=true;
 
 #define DEBUG if constexpr(debug)
 
+template<class... Ts>
+struct ov : Ts... { using Ts::operator()...; };
+
 template<class T, size_t _N, class F>
 requires is_invocable_r_v<T, F, T, T> && (0 < _N)
 class ST{
@@ -61,6 +64,15 @@ public:
 		a.fill(id);
 		size_t i = N;
 		for(const T &v : il) a[i++] = v;
+		for(size_t i=N; --i;)
+			a[i] = f(a[i*2], a[i*2 + 1]);
+	}
+
+	ST(const array<T, _N> &arr, const T &id, const F &f)
+	: id(id), f(f){
+		a.fill(id);
+		size_t i = N;
+		for(const T &v : arr) a[i++] = v;
 		for(size_t i=N; --i;)
 			a[i] = f(a[i*2], a[i*2 + 1]);
 	}
@@ -81,21 +93,26 @@ public:
 	}
 };
 
-using TK = variant<uf1, if1, double>;
+using TK = variant<uf2, if1, f8>;
+template<size_t N>
 uf1 tkz(
 	string_view sv,
-	array<TK, 80> &tks,
-	array<pair<uf1, uf1>, 80> &ops
+	array<TK, N> &tks,
+	array<pair<uf1, uf1>, N> &ops
 ){
 	uf1 p = 0;
 	tks[p++] = uf1(0);
+	ops.fill({0,0});
 
 	bool qn = false;
 	u16 n = 0;
 	uf1 ne = 0;
 
+	array<uf1, (N+1)/2> st;
+	typename decltype(st)::iterator sp = st.begin();
+
 	const auto jt = [&](){
-		array<function<void(char c)>, 128> jt{}, _jt;
+		static array<function<void(char c)>, 128> jt{}, _jt;
 		jt.fill([&](char c){
 			constexpr auto e10 = [] consteval {
 				array<f8, 32> e10{};
@@ -106,10 +123,12 @@ uf1 tkz(
 			}();
 
 			if(qn){
-				tks[p++] = ne ? n * e10[ne-1] : n;
+				if(ne) tks[p++] = n * e10[ne-1];
+				else tks[p++] = if1(n);
 				n = 0, ne = 0;
 				qn = false;
 			}
+			// DEBUG cout<<"jt:"<<hex<<+c<<' '<<dec<<' '<<flush;
 			_jt[c](c);
 		});
 
@@ -122,29 +141,44 @@ uf1 tkz(
 		}
 
 		for(uf1 c=26; c--;)
-			_jt[c+0x41] = [&p, &tks, &ops](char c){ tks[p++] = uf1(c-0x41); };
+			_jt[c+0x41] = [&p, &tks, &ops](char c){ tks[p++] = uf2(c & 0x1f); };
 
 		_jt[0x2E /* . */] = [&ne](char c){ ne = 1; };
 		_jt[0x2A /* * */] = [&p, &tks, &ops](char c){
-			ops.push({1, p});
-			tks[p++] = uf1(0x20);
+			ops[p] = {2, p};
+			tks[p++] = uf2(0x20);
 		};
 		_jt[0x2B /* + */] = [&p, &tks, &ops](char c){
-			ops.push({0, p});
-			tks[p++] = uf1(0x30);
+			ops[p] = {1, p};
+			tks[p++] = uf2(0x30);
 		};
-		_jt[0x2D /* - */] = [&p, &tks, &ops](char c){};
-		_jt[0x28 /* ( */] = [&p, &tks, &ops](char c){};
-		_jt[0x29 /* ) */] = [&p, &tks, &ops](char c){};
-		_jt[0x5B /* [ */] = [&p, &tks, &ops](char c){};
-		_jt[0x5D /* ] */] = [&p, &tks, &ops](char c){};
+		_jt[0x2D /* - */] = [&p, &tks, &ops](char c){
+			ops[p] = {3, p};
+			tks[p++] = uf2(0x31);
+		};
+		_jt[0x28 /* ( */] = [&p, &tks, &ops, &sp](char c){
+			ops[p] = {4, p};
+			*sp++ = p++;
+		};
+		_jt[0x29 /* ) */] = [&p, &tks, &ops, &sp](char c){
+			ops[p] = {0, p};
+			tks[p] = uf2(0x0100u | *--sp-p & 0xffu);
+			tks[*sp] = uf2(0x0100u | p++-*sp & 0xffu);
+		};
+		_jt[0x5B /* [ */] = [&p, &tks, &ops, &sp](char c){
+			ops[p] = {4, p};
+			*sp++ = p++;
+		};
+		_jt[0x5D /* ] */] = [&p, &tks, &ops, &sp](char c){
+			ops[p] = {0, p};
+			tks[p] = uf2(0x0200u | *--sp-p & 0xffu);
+			tks[*sp] = uf2(0x0200u | p++-*sp & 0xffu);
+		};
 		_jt[0x20] = [](char c){};
 		return jt;
 	}();
 
-	for(char c : sv){
-		jt[c](c);
-	}
+	for(char c : sv) jt[c](c);
 
 	return p;
 }
@@ -180,6 +214,17 @@ int main(){
 				string expr;
 				getline(cin, expr);
 				DEBUG cout<<expr<<'\n';
+
+				array<TK, 81> tks;
+				array<pair<uf1, uf1>, 81> ops;
+				uf1 p = tkz(expr, tks, ops);
+
+				DEBUG for(uf1 i=0; i<p; ++i)
+					visit(ov{
+						[](const uf2 &v){ cout<<"u"<<hex<<+v<<dec<<' '; },
+						[](const if1 &v){ cout<<"i"<<hex<<+v<<dec<<' '; },
+						[](const f8 &v){ cout<<"f"<<v<<' '; }
+					}, tks[i]);
 			}else{
 				uf2 x;
 				for(uf4 i=0; i<m; ++i)
@@ -193,5 +238,3 @@ int main(){
 }
 AFESDJPOI
 ;
-
-
