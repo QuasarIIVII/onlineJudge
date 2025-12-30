@@ -644,8 +644,30 @@ T qio_is_read_iu8(){
 }
 
 int main(){
+	cin.tie(0)->sync_with_stdio(false);
+
 	qio_init(300000*11+64, 64);
 	qio_is_load();
+
+	uf4 n;
+	n = qio_is_read_iu8<uf4>();
+
+	priority_queue<if8, varray<if8, 1<<19>, greater<if8>> pq;
+	if8 r = 0;
+	while(n--){
+		if4 x = qio_is_read_iu8<if4>();
+		pq.push(x);
+		r += x;
+	}
+
+	while(pq.top() < -r){
+		if8 x = -r;
+		r = -pq.top();
+		pq.pop();
+		pq.push(x);
+	}
+
+	qio_os_write_i8(r);
 
 	qio_flush();
 	qio_close();
