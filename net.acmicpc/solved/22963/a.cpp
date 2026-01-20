@@ -650,16 +650,15 @@ int main(){
 	uf4 n = qio_is_read_iu8<uf4>();
 	array<pair<u4, u4>, 200'002> a;
 	a[0] = {1, 0};
-	a[n+1].first = numeric_limits<u4>::max();
 
 	array<pair<u4, u4>, 200'002> b;
 	decltype(b)::iterator be = b.begin() + 1;
 	b[0] = {1, 0};
 
-	for(uf4 i=1; i<=n; ++i)
-		a[i].first = qio_is_read_iu8<u4>();
-
 	for(uf4 i=1; i<=n+1; ++i){
+		if(!(a[i].first = qio_is_read_iu8<u4>()))
+			a[i].first = numeric_limits<u4>::max();
+
 		const auto it = upper_bound(
 			b.begin(), be,
 			pair<u4, u4>{a[i].first, 0},
