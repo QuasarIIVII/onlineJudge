@@ -153,11 +153,11 @@ ql.io:
 
 	xor edi, edi
 	lea rsi, [r12+r13+ql.io.is.offset+ql.io.is.offsetStr+ql.io.os.offsetStr+0x40]
-	mov rdx, 3 ; PROT_READ | PROT_WRITE
-	mov r10, 0x22 ; MAP_PRIVATE | MAP_ANONYMOUS
+	mov edx, 3 ; PROT_READ | PROT_WRITE
+	mov r10d, 0x22 ; MAP_PRIVATE | MAP_ANONYMOUS
 	mov r8, -1
 	xor r9d, r9d
-	mov rax, 0x09
+	mov eax, 0x09
 	syscall
 
 ;	mov rax, ql.io.s
@@ -215,7 +215,7 @@ ql.io.is.load:
 
 	ret
 
-	.e0:
+.e0:
 	xor rax, rax
 	not rax
 	ret
@@ -274,8 +274,8 @@ ql.io.is.read_iu8_s:
 	; 1 11 1             
 	mov rcx, [rel ql.io.data]
 	xor eax, eax
-	mov rsi, [rcx+ql.io.is.offset+0x08]
-	mov rcx, [rcx+ql.io.is.offset]
+	mov rsi, [rcx+ql.io.is.offset+0x08] ; rsi = ql.io.os.data
+	mov rcx, [rcx+ql.io.is.offset] ; rcx = ql.io.is.dataEnd
 
 	cmp byte [rsi], 0x2d
 	mov byte [rsp-1], 0
@@ -300,12 +300,15 @@ ql.io.is.read_iu8_s:
 		jb .l0s
 	.l0e:
 
+	jmp .l1m
+
 	.l1s:
 		movzx edx, byte [rsi]
 		bt [rel ql.io.isWhiteSpace], dx
+		lea rsi, [rsi + 1]
 		jnc .l1e
 
-		inc rsi
+	.l1m:
 		cmp rsi, rcx
 		jb .l1s
 	.l1e:
@@ -347,9 +350,8 @@ ql.io.os.write_cstr:
 
 	.l0s:
 		lodsb
-		stosb
-
 		test al, 0xff
+		stosb
 		jnz .l0s
 
 	sub rsi, r8
@@ -528,11 +530,11 @@ ql.io.os.write_u8_:
 
 ql.io.os.write_u8:
 	; rdi : u8 n
-	mov rax, 14757395258967641292
+	mov rax, 0xcccc_cccc_cccc_cccd
 
-	mul rdi					;0
-	mov rax, rdi			;1
-	shr rdx, 3				;0
+	mul rdi					; rdx:rax = rax*rdi
+	mov rax, rdi			; rax = rdi
+	shr rdx, 3				; 
 	lea rcx, [rdx+rdx*8]	;0
 	mov rdi, rdx			;1
 	add rcx, rdx			;0
