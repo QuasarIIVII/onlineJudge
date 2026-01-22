@@ -651,7 +651,7 @@ int main(){
 	array<uf4, 3> b;
 	for(uf4 &x : b) x=qio_is_read_iu8<uf4>()-1;
 
-	array<list<pair<u4, u2>>, 100'000> e;
+	array<vector<pair<u4, u2>>, 100'000> e;
 
 	for(uf4 m=qio_is_read_iu8<uf4>(); m--; ){
 		uf4 u=qio_is_read_iu8<uf4>()-1;
@@ -683,17 +683,7 @@ int main(){
 		}
 	}
 
-	uf4 r = 0;
-	uf4 ri = 0;
-
-	for(uf4 i=n; i--;){
-		if(r <= a[i]){
-			r = a[i];
-			ri = i;
-		}
-	}
-
-	qio_os_write_u8(ri+1);
+	qio_os_write_u8(max_element(a.begin(), a.begin()+n) - a.begin() + 1);
 
 	qio_flush();
 	qio_close();
