@@ -61,20 +61,80 @@ int main(){
 	for(u4 i=n; i--;){
 		cin>>a[i];
 		for(u4 j=n; j--;){
-			if(a[i][j]=='?') [pb++]={i, j};
-			else if(a[i][j]&0x70 == 0x30) c[pc++] = {i, j};
+			if(a[i][j]=='?') b[pb++]={i, j};
+			else if((a[i][j]&0x78) == 0x30) c[pc++] = {i, j};
 		}
 	}
 
 	while(pb--){
 		const auto &[p, q] = b[pb];
-		for(u4 i=p; i<n; ++i){
+		DEBUG cout<<"A "<<p<<' '<<q<<endl;
+		for(u4 i=p+1; i<n; ++i){
+			DEBUG cout<<"A "<<i<<' '<<q<<' '<<a[i][q]<<endl;
+			if(a[i][q] == 'X' || (a[i][q]&0x78) == 0x30) break;
 			if(a[i][q] == '?'){
+				DEBUG cout<<"A0"<<endl;
 				cout<<'0';
 				return 0;
 			}
+			a[i][q] = 0;
+		}
+		for(u4 i=p; i--;){
+			if(a[i][q] == 'X' || (a[i][q]&0x78) == 0x30) break;
+			if(a[i][q] == '?'){
+				DEBUG cout<<"A1"<<endl;
+				cout<<'0';
+				return 0;
+			}
+			a[i][q] = 0;
+		}
+		for(u4 i=q+1; i<n; ++i){
+			if(a[p][i] == 'X' || (a[p][i]&0x78) == 0x30) break;
+			if(a[p][i] == '?'){
+				DEBUG cout<<"A2"<<endl;
+				cout<<'0';
+				return 0;
+			}
+			a[p][i] = 0;
+		}
+		for(u4 i=q; i--;){
+			if(a[p][i] == 'X' || (a[p][i]&0x78) == 0x30) break;
+			if(a[p][i] == '?'){
+				DEBUG cout<<"A3"<<endl;
+				cout<<'0';
+				return 0;
+			}
+			a[p][i] = 0;
 		}
 	}
+
+	while(pc--){
+		const auto &[p, q] = c[pc];
+		u4 r = 0;
+		const array<pair<u2, u2>, 4> d = {
+			pair{p+1, q}, pair{p-1, q},
+			pair{p, q+1}, pair{p, q-1}
+		};
+		for(const auto &[x, y] : d){
+			if(x>=n || y>=n) continue;
+			if(a[x][y] == '?') ++r;
+		}
+		if(r != a[p][q]-0x30u){
+			DEBUG cout<<"B"<<endl;
+			cout<<'0';
+			return 0;
+		}
+	}
+
+	for(u4 i=n; i--;)for(u4 j=n; j--;){
+		if(a[i][j] == '.'){
+			DEBUG cout<<"C"<<endl;
+			cout<<'0';
+			return 0;
+		}
+	}
+
+	cout<<'1';
 
 	return 0;
 }
