@@ -63,13 +63,35 @@ int main(){
 
 	n = n*2 + (x?1:0);
 
-	u8 r = n&1 ? n-=9, 1 : 0;
-	const u8 a = (n+17) / 18;
-	const u8 _b = a*18 - n;
-	const u8 b = (_b+(_b&2 ? r+=4, 2 : 0)) / 4;
-	DEBUG cout<<n<<' '<<a<<' '<<b<<endl;
+	const u8 rr = (n+17) / 18;
+	const u8 r = rr<=8 ? 0 : rr-8;
+	const u8 e = n - r*18;
 
-	cout<<r + max(a, b);
+	array<u4, 9*7*2+18*2> d;
+	memset(d.data(), 0xff, sizeof(d));
+	d[0] = 0;
+
+	u4 p=0, q=0;
+	array<u4, 1024> Q;
+	Q[q++] = 0;
+
+	while(p!=q){
+		const u4 v = Q[p];
+		++p &= 0x3ff;
+
+		if(v==e)
+			return cout<<r+d[e], 0;
+
+		const array<u4, 4> nxts
+		= { v+18u, v+14u, v+9u, v-4u };
+		for(const u4 nxt : nxts){
+			if(d.size()<=nxt || d[nxt]!=-1u)
+				continue;
+
+			d[Q[q] = nxt] = d[v]+1;
+			++q &= 0x3ff;
+		}
+	}
 	return 0;
 }
 AFESDJPOI
