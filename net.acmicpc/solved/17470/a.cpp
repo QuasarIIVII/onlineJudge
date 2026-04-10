@@ -644,28 +644,145 @@ T qio_is_read_iu8(){
 }
 
 int main(){
-	qio_init(300000*11+64, 64);
+	qio_init(10*100*100 + 2'000'000*2 + 64, 10*100*100+64);
 	qio_is_load();
 
-	struct alignas(4) S{
-		u1 v;
-		u1 h;
-		u1 r;
+	struct S{
+		u1 id:2;
+		u1 v:1;
+		u1 h:1;
+		u1 res:4;
 	};
 
-	array<S, 4> s;
+	array<u1, 6> _s;
+	array<S, 4> &s = *reinterpret_cast<array<S, 4>*>(_s.data()+1);
+	s = {
+		S{0, 0, 0, 0},
+		S{1, 0, 0, 0},
+		S{2, 0, 0, 0},
+		S{3, 0, 0, 0},
+	};
+	u4 ro = 0;
+
 	array<array<u4, 128>, 100> a;
 
 	const u4 n = qio_is_read_iu8<u4>();
 	const u4 m = qio_is_read_iu8<u4>();
-	const u4 r = qio_is_read_iu8<u4>();
+	u4 r = qio_is_read_iu8<u4>();
 
 	for(u4 i=0; i<n; ++i)for(u4 j=0; j<m; ++j)
 		a[i][j] = qio_is_read_iu8<u4>();
 
+	// 0 1
+	// 3 2
+	constexpr array<S, 4>
+		sv = { S{0, 1, 0, 0}, S{0, 1, 0, 0}, S{0, 1, 0, 0}, S{0, 1, 0, 0} },
+		sh = { S{0, 0, 1, 0}, S{0, 0, 1, 0}, S{0, 0, 1, 0}, S{0, 0, 1, 0} };
+
+	u4 &xs = *reinterpret_cast<u4*>(s.data()); 
+	constexpr u4 xsv = bit_cast<u4>(sv), xsh = bit_cast<u4>(sh);
+
 	while(r--){
+		DEBUG for(u4 i=(cout<<ro<<" / ", 0); i<4 || (cout<<endl, 0); ++i)
+			cout<<+s[i].id<<' '<<+s[i].v<<' '<<+s[i].h<<" / ";
 		switch(qio_is_read_iu8<u1>()){
+		case 1:{
+			swap(s[0], s[3]);
+			swap(s[1], s[2]);
+			xs ^= xsv;
+			break;
 		}
+		case 2:{
+			swap(s[0], s[1]);
+			swap(s[3], s[2]);
+			xs ^= xsh;
+			break;
+		}
+		case 3:{
+			xs = xs&0xf3f3f3f3 | (xs&0x08080808) >> 1 | (xs&0x04040404) << 1;
+			*reinterpret_cast<u4*>(s.data()+1) = xs;
+			++ro &= 3;
+			_s[1] = _s[5];
+			break;
+		}
+		case 4:{
+			xs = xs&0xf3f3f3f3 | (xs&0x08080808) >> 1 | (xs&0x04040404) << 1;
+			*reinterpret_cast<u4*>(s.data()-1) = xs;
+			--ro &= 3;
+			_s[4] = _s[0];
+			break;
+		}
+		case 5:{
+			*reinterpret_cast<u4*>(s.data()+1) = xs;
+			_s[1] = _s[5];
+			break;
+		}
+		case 6:{
+			*reinterpret_cast<u4*>(s.data()-1) = xs;
+			_s[4] = _s[0];
+			break;
+		}
+		default: __builtin_unreachable();
+		}
+	}
+
+	DEBUG for(u4 i=(cout<<ro<<" / ", 0); i<4 || (cout<<endl, 0); ++i)
+		cout<<+s[i].id<<' '<<+s[i].v<<' '<<+s[i].h<<" / ";
+
+	array<array<u4, 128>, 100> b;
+	const u4 nn = n/2, mm = m/2;
+	const array<pair<u4, u4>, 4>
+		base{ pair{0, 0}, pair{0, mm}, pair{nn, mm}, pair{nn, 0} },
+		vbase{ pair{0, 0}, pair{0, nn}, pair{mm, nn}, pair{mm, 0} };
+	if(ro&1){
+		const u1 x = ro&2 ? 1 : 2;
+		for(u4 k=4; k--;){
+			const auto &[bp, bq] = base[s[k].id];
+			const auto &[dp, dq] = vbase[k];
+			switch((x ^ bit_cast<u1>(s[k])>>2) & 3){
+			case 0:
+				for(u4 i=mm; i--;)for(u4 j=nn; j--;) b[dp+i][dq+j] = a[bp+j][bq+i];
+				break;
+			case 1:
+				for(u4 i=mm; i--;)for(u4 j=nn; j--;) b[dp+mm-i-1][dq+j] = a[bp+j][bq+i];
+				break;
+			case 2:
+				for(u4 i=mm; i--;)for(u4 j=nn; j--;) b[dp+i][dq+nn-j-1] = a[bp+j][bq+i];
+				break;
+			case 3:
+				for(u4 i=mm; i--;)for(u4 j=nn; j--;) b[dp+mm-i-1][dq+nn-j-1] = a[bp+j][bq+i];
+				break;
+			}
+		}
+		for(u4 i=0; i<m; ++i, qio_os_write_cstr("\n"))for(u4 j=0; j<n; ++j)
+			qio_os_write_u8(b[i][j]), qio_os_write_cstr(" ");
+	}else{
+		const u1 x = ro&2 ? 3 : 0;
+		for(u4 k=4; k--;){
+			const auto &[bp, bq] = base[s[k].id];
+			const auto &[dp, dq] = base[k];
+			switch((x ^ bit_cast<u1>(s[k])>>2) & 3){
+			case 0:
+				DEBUG cout<<"0"<<' ';
+				for(u4 i=nn; i--;)for(u4 j=mm; j--;) b[dp+i][dq+j] = a[bp+i][bq+j];
+				break;
+			case 1:
+				DEBUG cout<<"1"<<' ';
+				for(u4 i=nn; i--;)for(u4 j=mm; j--;) b[dp+nn-i-1][dq+j] = a[bp+i][bq+j];
+				break;
+			case 2:
+				DEBUG cout<<"2"<<' ';
+				for(u4 i=nn; i--;)for(u4 j=mm; j--;) b[dp+i][dq+mm-j-1] = a[bp+i][bq+j];
+				break;
+			case 3:
+				DEBUG cout<<"3"<<' ';
+				for(u4 i=nn; i--;)for(u4 j=mm; j--;) b[dp+nn-i-1][dq+mm-j-1] = a[bp+i][bq+j];
+				break;
+			}
+		}
+		DEBUG cout<<endl;
+		for(u4 i=0; i<n; ++i, qio_os_write_cstr("\n"))for(u4 j=0; j<m; ++j)
+			qio_os_write_u8(b[i][j]), qio_os_write_cstr(" ");
 	}
 
 	qio_flush();
