@@ -50,64 +50,44 @@ constexpr bool debug=true;
 int main(){
 	cin.tie(0)->sync_with_stdio(false);
 
-	auto a = []() consteval {
-		struct S{u4 x, s;};
-		array<array<S, 65536>, 16> a;
-		decltype(a)::value_type aa;
-		aa.fill({numeric_limits<u4>::max(), 0});
-		a.fill(aa);
-		for(u4 i=16; i--;) a[i][1u<<i] = {0, i};
-		return a;
-	}();
+	constexpr auto f = [](const u4 n, const u4 s, const array<array<u4, 16>, 16> &d){
+		array<array<u4, 1<<16>, 16> a;
+		memset(a.data(), 0xff, sizeof(a));
+		a[s][1u<<s] = 0;
 
-	array<array<u4, 16>, 16> d;
-	u2 n;
+		const u4 me = 1u<<n;
+		for(u4 m=1; m < me; ++m){
+			u4 mm = m;
+			for(u4 i=0, ti; (i+=(ti=countr_zero(mm))) < n; mm>>=(ti+1), ++i){
+				if(a[i][m] == numeric_limits<u4>::max()) continue;
+
+				for(u4 j=0; j<n; ++j){
+					const u4 nm = m|(1u<<j);
+					if(!d[i][j] || nm == m) continue;
+					a[j][nm] = min(a[j][nm], a[i][m]+d[i][j]);
+					DEBUG cout<<i<<' '<<bitset<4>(m)<<' '
+						<<j<<' '<<bitset<4>(nm)<<' '
+						<<a[i][m]<<' '<<a[j][nm]<<'\n';
+				}
+			}
+		}
+
+		u4 r = numeric_limits<u4>::max();
+		const u4 M = me-1;
+		for(u4 i=n; i--;)
+			if(d[i][s]) r = min(r, a[i][M]+d[i][s]);
+
+		return r;
+	};
+
+	u4 n;
 	cin>>n;
-
-	for(u4 i=0; i<n; ++i)for(u4 j=0; j<n; ++j)
+	array<array<u4, 16>, 16> d;
+	for(u4 i=n; i--;) for(u4 j=n; j--;)
 		cin>>d[i][j];
 
-	const u2 n1 = (1u<<n)-1;
-	struct S{u2 a, b;};
-	u4 qp = 0, qq = 0;
-	array<S, 0x4'0000> Q;
-	for(u2 i=n; i--;) Q[qq++] = {i, 1u<<i};
-
-	while(qq!=qp){
-		const auto [i, p] = Q[qp];
-		++qp &= 0x3'ffff;
-		const u8 w = a[i][p].x;
-		const u4 as = a[i][p].s;
-
-		if(p == n1){
-			const u8 nw = w + d[i][as];
-			auto &aw = a[as][0];
-
-			if(!d[i][as]) continue;
-			if(nw < aw.x){
-				DEBUG cout<<i<<' '<<bitset<8>(p)<<' '<<as<<' '<<bitset<8>(0)<<' '<<aw.x<<' '<<nw<<endl;
-				aw = {nw, as};
-			}
-			continue;
-		}
-
-		for(u2 j=n; j--;){
-			const u2 q = p|(1u<<j);
-			if(p==q || !d[i][j]) continue;
-			const u8 nw = w + d[i][j];
-			auto &aw = a[j][q];
-			if(nw < aw.x){
-				DEBUG cout<<i<<' '<<bitset<8>(p)<<' '<<j<<' '<<bitset<8>(q)<<' '<<aw.x<<' '<<nw<<endl;
-				aw = {nw, as};
-				Q[qq] = {j, q};
-				++qq &= 0x3'ffff;
-			}
-		}
-	}
-
 	u4 r = numeric_limits<u4>::max();
-	for(u2 i=n; i--;) r = min(r, a[i][0].x);
-
+	for(u4 s=n; s--;) r = min(r, f(n, s, d));
 	cout<<r;
 
 	return 0;
